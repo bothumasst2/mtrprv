@@ -115,12 +115,16 @@ export default function CoachDashboardPage() {
             id: user.id,
             username: user.username,
             profile_photo: user.profile_photo,
-            last_activity: lastActivity?.[0]?.date || "Never",
+            last_activity: lastActivity?.[0]?.date || "",
             total_distance: Math.round(totalDistance * 10) / 10,
           }
         }),
       )
-      setUserActivities(activities)
+
+      // Only show users who have actual activity (last_activity is not empty and total_distance > 0)
+      const activeUsers = activities.filter((activity) => activity.last_activity !== "" && activity.total_distance > 0)
+
+      setUserActivities(activeUsers)
     }
 
     setLoading(false)
@@ -192,41 +196,40 @@ export default function CoachDashboardPage() {
           </Card>
         </div>
 
-        {/* User Activities */}
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Recent User Activities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {userActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={getSafeSrc(activity.profile_photo) || "/placeholder.svg"} />
-                      <AvatarFallback className="bg-orange-500 text-white">
-                        {activity.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium text-gray-800">{activity.username}</p>
-                      <p className="text-sm text-gray-600">
-                        Last activity:{" "}
-                        {activity.last_activity !== "Never"
-                          ? new Date(activity.last_activity).toLocaleDateString()
-                          : "Never"}
-                      </p>
+        {/* User Activities - Only show if there are active users */}
+        {userActivities.length > 0 && (
+          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-gray-800">Recent User Activities</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {userActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={getSafeSrc(activity.profile_photo) || "/placeholder.svg"} />
+                        <AvatarFallback className="bg-orange-500 text-white">
+                          {activity.username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-gray-800">{activity.username}</p>
+                        <p className="text-sm text-gray-600">
+                          Last activity: {new Date(activity.last_activity).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-800">{activity.total_distance}km</p>
+                      <p className="text-sm text-gray-600">Total distance</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-800">{activity.total_distance}km</p>
-                    <p className="text-sm text-gray-600">Total distance</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

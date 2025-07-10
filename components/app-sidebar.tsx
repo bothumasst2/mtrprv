@@ -72,7 +72,7 @@ export function AppSidebar() {
 
   const getCoachMenuItems = () => [
     { title: "Dashboard", url: "/coach/dashboard", icon: Home },
-    { title: "Profile", url: "/profile", icon: User },
+    // Removed Profile for coaches
     { title: "Athletes", url: "/coach/athletes", icon: Users },
     { title: "Training Menu", url: "/coach/training-menu", icon: Calendar },
     { title: "Ranking", url: "/ranking", icon: Trophy },

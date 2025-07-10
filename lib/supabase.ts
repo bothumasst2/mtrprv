@@ -1,135 +1,22 @@
-import { createClient } from "@supabase/supabase-js"
+;/import { createClient, type SupabaseClient } from "@supabase/aabepssu - js
+"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-export type Database = {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string
-          email: string
-          username: string
-          profile_photo: string | null
-          strava_link: string | null
-          role: "user" | "coach" | "admin"
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          email: string
-          username: string
-          profile_photo?: string | null
-          strava_link?: string | null
-          role?: "user" | "coach" | "admin"
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          username?: string
-          profile_photo?: string | null
-          strava_link?: string | null
-          role?: "user" | "coach" | "admin"
-          created_at?: string
-        }
-      }
-      training_log: {
-        Row: {
-          id: string
-          user_id: string
-          date: string
-          training_type: string
-          distance: number
-          strava_link: string | null
-          status: "completed" | "pending" | "missed"
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          date: string
-          training_type: string
-          distance: number
-          strava_link?: string | null
-          status?: "completed" | "pending" | "missed"
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          date?: string
-          training_type?: string
-          distance?: number
-          strava_link?: string | null
-          status?: "completed" | "pending" | "missed"
-          created_at?: string
-        }
-      }
-      training_agenda: {
-        Row: {
-          id: string
-          user_id: string
-          date: string
-          training_type: string
-          target_distance: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          date: string
-          training_type: string
-          target_distance: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          date?: string
-          training_type?: string
-          target_distance?: number
-          created_at?: string
-        }
-      }
-      training_assignments: {
-        Row: {
-          id: string
-          coach_id: string
-          user_id: string
-          training_type: string
-          training_details: string | null
-          assigned_date: string
-          target_date: string
-          status: "pending" | "completed"
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          coach_id: string
-          user_id: string
-          training_type: string
-          training_details?: string | null
-          assigned_date: string
-          target_date: string
-          status?: "pending" | "completed"
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          coach_id?: string
-          user_id?: string
-          training_type?: string
-          training_details?: string | null
-          assigned_date?: string
-          target_date?: string
-          status?: "pending" | "completed"
-          created_at?: string
-        }
-      }
-    }
-  }
+/**
+ * During `next build` Vercel may not have the env vars yet.
+ * We fall back to a dummy client so the bundle is created, but we
+ * log a warning so you know the real keys are still required.
+ */
+function buildTimeClient(): SupabaseClient {
+  console.warn(
+    "[Supabase] NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY are missing at build-time. " +
+      "Using a dummy client.  " +
+      "Add the env vars in your Vercel project settings.",
+  )
+  // The URL/key just need to be syntactically valid – they won’t be used.
+  return createClient("https://placeholder.supabase.co", "public-anon-key")
 }
+
+export const supabase: SupabaseClient = url && anon ? createClient(url, anon) : buildTimeClient()

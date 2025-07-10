@@ -55,10 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
 
-      if (event === "SIGNED_IN" && session?.user) {
-        console.log("User signed in, redirecting to dashboard")
-        router.push("/dashboard")
-      } else if (event === "SIGNED_OUT") {
+      // Only redirect on sign out, not sign in (handled in signIn function)
+      if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to login")
         router.push("/login")
       }
@@ -70,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Attempting sign in for:", email)
-      console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -83,6 +80,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log("Sign in successful:", !!data.user)
+
+      // Get user role and redirect accordingly
+      if (data.user) {
+        const { data: userData } = await supabase.from("users").select("role").eq("id", data.user.id).single()
+
+        const userRole = userData?.role || "user"
+
+        if (userRole === "coach" || userRole === "admin") {
+          router.push("/coach/dashboard")
+        } else {
+          router.push("/dashboard")
+        }
+      }
     } catch (error) {
       console.error("Sign in failed:", error)
       throw error

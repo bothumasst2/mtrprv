@@ -61,8 +61,8 @@ export default function DashboardPage() {
       .eq("status", "pending")
 
     setStats({
-      totalWorkouts: totalData?.length || 1,
-      weeklyTraining: weeklyData?.length || 0, // This will be 0 when all assignments are completed
+      totalWorkouts: totalData?.length || 0, // Changed from 1 to 0
+      weeklyTraining: weeklyData?.length || 0,
     })
   }
 
@@ -76,14 +76,8 @@ export default function DashboardPage() {
       .order("date", { ascending: false })
       .limit(4)
 
-    const defaultTasks = [
-      { id: "1", training_type: "Easy Run Zone 2", status: "completed" as const, date: "2025-01-10" },
-      { id: "2", training_type: "Long Run", status: "completed" as const, date: "2025-01-12" },
-      { id: "3", training_type: "Medium Run (Speed)", status: "missed" as const, date: "2025-01-14" },
-      { id: "4", training_type: "Fartlek Run (Speed)", status: "completed" as const, date: "2025-01-16" },
-    ]
-
-    setRecentTasks(data && data.length > 0 ? data : defaultTasks)
+    // Remove default tasks - only show real data
+    setRecentTasks(data || []) // Remove the defaultTasks fallback
   }
 
   return (

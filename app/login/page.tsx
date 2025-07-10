@@ -1,8 +1,7 @@
 "use client"
 
-import React from "react"
-
-import { useState } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
@@ -20,8 +19,15 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const { signIn } = useAuth()
+  const { signIn, user } = useAuth()
   const router = useRouter()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard")
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,20 +36,23 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
+
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true")
         localStorage.setItem("email", email)
       }
-      router.push("/dashboard")
+
+      // Redirect will be handled by auth context
     } catch (err: any) {
-      setError(err.message)
+      console.error("Login error:", err)
+      setError(err.message || "Login failed. Please check your credentials.")
     } finally {
       setLoading(false)
     }
   }
 
   // Load remembered email on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     const remembered = localStorage.getItem("rememberMe")
     const savedEmail = localStorage.getItem("email")
     if (remembered === "true" && savedEmail) {
@@ -57,7 +66,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
-            {/* Bigger logo with default black color */}
             <MTRLogo className="w-32 h-24 mx-auto" />
           </div>
           <CardTitle className="text-2xl font-bold">MTR Private Training</CardTitle>

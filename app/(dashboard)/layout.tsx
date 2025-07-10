@@ -1,15 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { MTRLogo } from "@/components/mtr-logo"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { useProfile } from "@/contexts/profile-context"
-import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
 function getSafeSrc(src: string | null | undefined) {
@@ -46,67 +45,17 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const { user, loading } = useAuth()
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [roleLoading, setRoleLoading] = useState(true)
   const router = useRouter()
-  const pathname = usePathname()
 
-  // Redirect to login if not authenticated
+  // Simple redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      console.log("No user found, redirecting to login")
       router.replace("/login")
-      return
     }
   }, [user, loading, router])
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) {
-        setUserRole(null)
-        setRoleLoading(false)
-        return
-      }
-
-      try {
-        const { data, error } = await supabase.from("users").select("role").eq("id", user.id).single()
-        if (error) {
-          console.error("Error fetching user role:", error)
-          setUserRole("user")
-        } else {
-          setUserRole(data?.role || "user")
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error)
-        setUserRole("user")
-      } finally {
-        setRoleLoading(false)
-      }
-    }
-
-    if (!loading && user) {
-      fetchUserRole()
-    }
-  }, [user, loading])
-
-  // Redirect based on role and current path
-  useEffect(() => {
-    if (!loading && !roleLoading && user && userRole) {
-      // If coach/admin is on user dashboard, redirect to coach dashboard
-      if ((userRole === "coach" || userRole === "admin") && pathname === "/dashboard") {
-        console.log("Redirecting coach to coach dashboard")
-        router.replace("/coach/dashboard")
-      }
-      // If user is on coach dashboard, redirect to user dashboard
-      else if (userRole === "user" && pathname.startsWith("/coach")) {
-        console.log("Redirecting user to user dashboard")
-        router.replace("/dashboard")
-      }
-    }
-  }, [user, userRole, loading, roleLoading, router, pathname])
-
   // Show loading while checking authentication
-  if (loading || roleLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -117,16 +66,9 @@ export default function DashboardLayout({
     )
   }
 
-  // Show loading if no user (while redirecting)
+  // Redirect if no user
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <MTRLogo className="w-24 h-16 mx-auto mb-4" />
-          <p>Redirecting to login...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (

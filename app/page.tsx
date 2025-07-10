@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
+import { MTRLogo } from "@/components/mtr-logo"
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -21,8 +22,13 @@ export default function HomePage() {
       }
 
       try {
-        const { data } = await supabase.from("users").select("role").eq("id", user.id).single()
-        setUserRole(data?.role || "user")
+        const { data, error } = await supabase.from("users").select("role").eq("id", user.id).single()
+        if (error) {
+          console.error("Error fetching user role:", error)
+          setUserRole("user")
+        } else {
+          setUserRole(data?.role || "user")
+        }
       } catch (error) {
         console.error("Error fetching user role:", error)
         setUserRole("user")
@@ -40,6 +46,7 @@ export default function HomePage() {
     if (!loading && !roleLoading && !redirecting) {
       if (user && userRole) {
         setRedirecting(true)
+        console.log("Redirecting user with role:", userRole)
         // Route based on user role with immediate redirect
         if (userRole === "admin" || userRole === "coach") {
           router.replace("/coach/dashboard")
@@ -48,21 +55,18 @@ export default function HomePage() {
         }
       } else if (!user) {
         setRedirecting(true)
+        console.log("No user, redirecting to login")
         router.replace("/login")
       }
     }
   }, [user, userRole, loading, roleLoading, redirecting, router])
 
-  if (loading || roleLoading || redirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <img src="/logo-mtr.svg" alt="MTR Logo" className="w-24 h-16 mx-auto mb-4" />
-          <p>Loading...</p>
-        </div>
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <MTRLogo className="w-24 h-16 mx-auto mb-4" />
+        <p>Loading...</p>
       </div>
-    )
-  }
-
-  return null
+    </div>
+  )
 }

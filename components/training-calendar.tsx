@@ -40,19 +40,6 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
   useEffect(() => {
     if (user) {
       fetchTrainingData()
-    } else {
-      const defaultData = [
-        { date: "2025-07-01", hasCompleted: true, hasPendingAgenda: false, hasOverdueAgenda: false },
-        { date: "2025-07-02", hasCompleted: false, hasPendingAgenda: true, hasOverdueAgenda: false },
-        { date: "2025-07-03", hasCompleted: true, hasPendingAgenda: false, hasOverdueAgenda: false },
-        { date: "2025-07-04", hasCompleted: true, hasPendingAgenda: false, hasOverdueAgenda: false },
-        { date: "2025-07-07", hasCompleted: true, hasPendingAgenda: false, hasOverdueAgenda: false },
-        { date: "2025-07-08", hasCompleted: true, hasPendingAgenda: false, hasOverdueAgenda: false },
-        { date: "2025-07-09", hasCompleted: false, hasPendingAgenda: true, hasOverdueAgenda: false },
-        { date: "2025-07-11", hasCompleted: false, hasPendingAgenda: true, hasOverdueAgenda: false },
-        { date: "2025-07-05", hasCompleted: false, hasPendingAgenda: false, hasOverdueAgenda: true }, // Overdue
-      ]
-      setTrainingData(defaultData)
     }
   }, [currentDate, user])
 
@@ -64,6 +51,14 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
     const startDate = new Date(year, month, 1).toISOString().split("T")[0]
     const endDate = new Date(year, month + 1, 0).toISOString().split("T")[0]
     const today = new Date().toISOString().split("T")[0]
+
+    // Update missed status first
+    await supabase
+      .from("training_assignments")
+      .update({ status: "missed" })
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .lt("target_date", today)
 
     // Fetch completed training logs
     const { data: logs } = await supabase
@@ -83,19 +78,21 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
 
     const dataMap = new Map<string, TrainingData>()
 
-    // Mark completed training (green indicators)
+    // Mark completed training (green indicators) - use exact date
     logs?.forEach((log) => {
-      const existing = dataMap.get(log.date) || {
-        date: log.date,
-        hasCompleted: false,
-        hasPendingAgenda: false,
-        hasOverdueAgenda: false,
+      if (log.status === "completed") {
+        const existing = dataMap.get(log.date) || {
+          date: log.date,
+          hasCompleted: false,
+          hasPendingAgenda: false,
+          hasOverdueAgenda: false,
+        }
+        existing.hasCompleted = true
+        dataMap.set(log.date, existing)
       }
-      existing.hasCompleted = log.status === "completed"
-      dataMap.set(log.date, existing)
     })
 
-    // Mark agenda training (blue for pending, red for overdue)
+    // Mark agenda training (blue for pending, red for missed) - use exact target_date
     assignments?.forEach((assignment) => {
       const existing = dataMap.get(assignment.target_date) || {
         date: assignment.target_date,
@@ -105,11 +102,9 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       }
 
       if (assignment.status === "pending") {
-        if (assignment.target_date < today) {
-          existing.hasOverdueAgenda = true // Red for overdue
-        } else {
-          existing.hasPendingAgenda = true // Blue for pending
-        }
+        existing.hasPendingAgenda = true // Blue for pending
+      } else if (assignment.status === "missed") {
+        existing.hasOverdueAgenda = true // Red for missed
       }
       dataMap.set(assignment.target_date, existing)
     })
@@ -143,6 +138,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
   const getTrainingIndicator = (day: number, isCurrentMonth: boolean) => {
     if (!isCurrentMonth) return null
 
+    // Create date string in local timezone to match database dates exactly
     const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split("T")[0]
     const data = trainingData.find((d) => d.date === dateStr)
 
@@ -152,7 +148,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       // Green indicator for completed training
       return <div className="w-2 h-0.5 bg-green-500 rounded-full mx-auto mt-0.5" />
     } else if (data.hasOverdueAgenda) {
-      // Red indicator for overdue agenda
+      // Red indicator for missed agenda
       return <div className="w-2 h-0.5 bg-red-500 rounded-full mx-auto mt-0.5" />
     } else if (data.hasPendingAgenda) {
       // Blue indicator for pending agenda

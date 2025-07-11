@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { CheckCircle, Clock, Calendar } from "lucide-react"
+import { CheckCircle, Clock, Calendar, AlertTriangle } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
 
@@ -12,7 +11,7 @@ interface TrainingAssignment {
   training_type: string
   training_details: string | null
   target_date: string
-  status: "pending" | "completed"
+  status: "pending" | "completed" | "missed"
   assigned_date: string
 }
 
@@ -25,6 +24,28 @@ export default function TrainingAgendaPage() {
     if (user) {
       fetchAssignments()
     }
+  }, [user])
+
+  useEffect(() => {
+    // Update missed status on component mount and periodically
+    const updateMissedStatus = async () => {
+      if (!user) return
+
+      const today = new Date().toISOString().split("T")[0]
+
+      // Update assignments that are past target date and still pending to missed
+      await supabase
+        .from("training_assignments")
+        .update({ status: "missed" })
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .lt("target_date", today)
+
+      // Refresh the assignments after updating
+      fetchAssignments()
+    }
+
+    updateMissedStatus()
   }, [user])
 
   const fetchAssignments = async () => {
@@ -47,39 +68,37 @@ export default function TrainingAgendaPage() {
     setLoading(false)
   }
 
-  const markAsCompleted = async (assignmentId: string) => {
-    const { error } = await supabase.from("training_assignments").update({ status: "completed" }).eq("id", assignmentId)
-
-    if (!error) {
-      fetchAssignments()
-      // Trigger a refresh of dashboard stats by dispatching a custom event
-      window.dispatchEvent(new CustomEvent("trainingCompleted"))
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "text-green-500"
+      case "missed":
+        return "text-red-500"
+      default:
+        return "text-blue-500" // pending
     }
   }
 
-  const getStatusColor = (status: string, targetDate: string) => {
-    const today = new Date().toISOString().split("T")[0]
-    if (status === "completed") return "text-green-500"
-    if (status === "pending" && targetDate < today) return "text-red-500" // Overdue
-    return "text-blue-500" // Pending
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle className="h-5 w-5 text-green-500" />
+      case "missed":
+        return <AlertTriangle className="h-5 w-5 text-red-500" />
+      default:
+        return <Clock className="h-5 w-5 text-blue-500" /> // pending
+    }
   }
 
-  const getStatusIcon = (status: string, targetDate: string) => {
-    const today = new Date().toISOString().split("T")[0]
-    if (status === "completed") {
-      return <CheckCircle className="h-5 w-5 text-green-500" />
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Completed"
+      case "missed":
+        return "Missed"
+      default:
+        return "Pending"
     }
-    if (status === "pending" && targetDate < today) {
-      return <Clock className="h-5 w-5 text-red-500" /> // Overdue
-    }
-    return <Clock className="h-5 w-5 text-blue-500" /> // Pending
-  }
-
-  const getStatusText = (status: string, targetDate: string) => {
-    const today = new Date().toISOString().split("T")[0]
-    if (status === "completed") return "Completed"
-    if (status === "pending" && targetDate < today) return "Overdue"
-    return "Pending"
   }
 
   if (loading) {
@@ -116,13 +135,11 @@ export default function TrainingAgendaPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      {getStatusIcon(assignment.status, assignment.target_date)}
+                      {getStatusIcon(assignment.status)}
                       {assignment.training_type}
                     </CardTitle>
-                    <span
-                      className={`text-sm font-medium ${getStatusColor(assignment.status, assignment.target_date)}`}
-                    >
-                      {getStatusText(assignment.status, assignment.target_date)}
+                    <span className={`text-sm font-medium ${getStatusColor(assignment.status)}`}>
+                      {getStatusText(assignment.status)}
                     </span>
                   </div>
                 </CardHeader>
@@ -145,13 +162,13 @@ export default function TrainingAgendaPage() {
                     </div>
                   )}
 
-                  {assignment.status === "pending" && (
-                    <Button
-                      onClick={() => markAsCompleted(assignment.id)}
-                      className="w-full bg-orange-500 hover:bg-orange-600"
-                    >
-                      Mark as Completed
-                    </Button>
+                  {(assignment.status === "pending" || assignment.status === "missed") && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-blue-800 text-sm">
+                        <strong>Note:</strong> This training will be automatically marked as completed when you upload
+                        the corresponding training in your Training Log.
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>

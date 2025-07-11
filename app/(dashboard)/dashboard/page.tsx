@@ -61,7 +61,7 @@ export default function DashboardPage() {
       .eq("status", "pending")
 
     setStats({
-      totalWorkouts: totalData?.length || 0, // Changed from 1 to 0
+      totalWorkouts: totalData?.length || 0,
       weeklyTraining: weeklyData?.length || 0,
     })
   }
@@ -76,8 +76,7 @@ export default function DashboardPage() {
       .order("date", { ascending: false })
       .limit(4)
 
-    // Remove default tasks - only show real data
-    setRecentTasks(data || []) // Remove the defaultTasks fallback
+    setRecentTasks(data || [])
   }
 
   return (

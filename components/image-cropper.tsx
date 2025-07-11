@@ -20,6 +20,7 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCroppe
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -31,14 +32,22 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCroppe
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging) return
+      if (!isDragging || !containerRef.current) return
 
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      })
+      const containerRect = containerRef.current.getBoundingClientRect()
+      const containerSize = 200
+      const imageSize = containerSize * scale[0]
+
+      // Calculate bounds to keep image within container
+      const maxX = (imageSize - containerSize) / 2
+      const maxY = (imageSize - containerSize) / 2
+
+      const newX = Math.max(-maxX, Math.min(maxX, e.clientX - dragStart.x))
+      const newY = Math.max(-maxY, Math.min(maxY, e.clientY - dragStart.y))
+
+      setPosition({ x: newX, y: newY })
     },
-    [isDragging, dragStart],
+    [isDragging, dragStart, scale],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -55,6 +64,11 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCroppe
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
+
+  // Reset position when scale changes to keep image centered
+  React.useEffect(() => {
+    setPosition({ x: 0, y: 0 })
+  }, [scale])
 
   const getCroppedImage = async (): Promise<File> => {
     const canvas = canvasRef.current
@@ -79,8 +93,8 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCroppe
     ctx.clip()
 
     const drawSize = cropSize * scaleValue
-    const drawX = (size - drawSize) / 2 + position.x * 0.5
-    const drawY = (size - drawSize) / 2 + position.y * 0.5
+    const drawX = (size - drawSize) / 2 + (position.x * size) / cropSize
+    const drawY = (size - drawSize) / 2 + (position.y * size) / cropSize
 
     ctx.drawImage(image, drawX, drawY, drawSize, drawSize)
     ctx.restore()
@@ -117,6 +131,7 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCroppe
           {/* Crop Area */}
           <div className="relative mx-auto" style={{ width: 200, height: 200 }}>
             <div
+              ref={containerRef}
               className="absolute inset-0 rounded-full border-2 border-orange-500 overflow-hidden cursor-move bg-gray-100"
               onMouseDown={handleMouseDown}
             >
@@ -124,18 +139,24 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCroppe
                 ref={imageRef}
                 src={imageSrc || "/placeholder.svg"}
                 alt="Crop preview"
-                className="absolute"
+                className="absolute select-none"
                 style={{
                   width: 200 * scale[0],
                   height: 200 * scale[0],
-                  left: position.x,
-                  top: position.y,
-                  transform: "translate(-50%, -50%)",
-                  marginLeft: "50%",
-                  marginTop: "50%",
+                  left: "50%",
+                  top: "50%",
+                  transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
+                  objectFit: "cover",
                 }}
                 draggable={false}
               />
+            </div>
+            {/* Grid lines for better positioning */}
+            <div className="absolute inset-0 rounded-full pointer-events-none">
+              <div className="absolute top-1/3 left-0 right-0 h-px bg-white opacity-30" />
+              <div className="absolute top-2/3 left-0 right-0 h-px bg-white opacity-30" />
+              <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white opacity-30" />
+              <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white opacity-30" />
             </div>
           </div>
 

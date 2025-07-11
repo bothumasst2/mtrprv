@@ -21,18 +21,9 @@ interface TrainingLog {
   status: "completed" | "pending" | "missed"
 }
 
-const TRAINING_TYPES = [
-  "EASY RUN ZONE 2",
-  "LONGRUN",
-  "MEDIUM RUN (SPEED)",
-  "EASY RUN (EZ)",
-  "Strenght session / Running Drills",
-  "FARTLEK RUN (SPEED)",
-  "INTERVAL RUN (SPEED)",
-]
-
 export default function TrainingLogPage() {
   const [trainingLogs, setTrainingLogs] = useState<TrainingLog[]>([])
+  const [availableTrainingTypes, setAvailableTrainingTypes] = useState<string[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -45,6 +36,7 @@ export default function TrainingLogPage() {
   useEffect(() => {
     if (user) {
       fetchTrainingLogs()
+      fetchAvailableTrainingTypes()
     }
   }, [user])
 
@@ -61,6 +53,34 @@ export default function TrainingLogPage() {
     setTrainingLogs(data || [])
   }
 
+  const fetchAvailableTrainingTypes = async () => {
+    if (!user) return
+
+    // Get training types from pending assignments
+    const { data: assignments } = await supabase
+      .from("training_assignments")
+      .select("training_type")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+
+    if (assignments && assignments.length > 0) {
+      const uniqueTypes = [...new Set(assignments.map((a) => a.training_type))]
+      setAvailableTrainingTypes(uniqueTypes)
+    } else {
+      // Fallback to all training types if no assignments
+      const allTypes = [
+        "EASY RUN ZONA 2",
+        "LONGRUN",
+        "MEDIUM RUN (SPEED)",
+        "EASY RUN (EZ)",
+        "Strenght session / Running Drills",
+        "FARTLEK RUN ( SPEED )",
+        "INTERVAL RUN ( SPEED )",
+      ]
+      setAvailableTrainingTypes(allTypes)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -75,6 +95,14 @@ export default function TrainingLogPage() {
     })
 
     if (!error) {
+      // Auto-complete matching training assignment
+      await supabase
+        .from("training_assignments")
+        .update({ status: "completed" })
+        .eq("user_id", user.id)
+        .eq("training_type", formData.training_type)
+        .eq("status", "pending")
+
       setFormData({
         date: new Date().toISOString().split("T")[0],
         training_type: "",
@@ -83,6 +111,10 @@ export default function TrainingLogPage() {
       })
       setShowForm(false)
       fetchTrainingLogs()
+      fetchAvailableTrainingTypes()
+
+      // Trigger dashboard refresh
+      window.dispatchEvent(new CustomEvent("trainingCompleted"))
     }
   }
 
@@ -128,7 +160,7 @@ export default function TrainingLogPage() {
                       <SelectValue placeholder="Select training type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {TRAINING_TYPES.map((type) => (
+                      {availableTrainingTypes.map((type) => (
                         <SelectItem key={type} value={type}>
                           {type}
                         </SelectItem>

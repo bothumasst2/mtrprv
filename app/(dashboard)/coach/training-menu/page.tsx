@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Send } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
@@ -31,14 +32,15 @@ const TRAINING_TYPES = [
 
 export default function CoachTrainingMenuPage() {
   const [users, setUsers] = useState<User[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [formData, setFormData] = useState({
-    user_id: "",
     training_type: "",
     training_details: "",
     target_date: new Date().toISOString().split("T")[0],
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [successCount, setSuccessCount] = useState(0)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -51,27 +53,43 @@ export default function CoachTrainingMenuPage() {
     setUsers(data || [])
   }
 
+  const handleUserToggle = (userId: string) => {
+    setSelectedUsers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]))
+  }
+
+  const handleSelectAll = () => {
+    if (selectedUsers.length === users.length) {
+      setSelectedUsers([])
+    } else {
+      setSelectedUsers(users.map((user) => user.id))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || selectedUsers.length === 0) return
 
     setLoading(true)
     setSuccess(false)
 
-    const { error } = await supabase.from("training_assignments").insert({
+    // Create assignments for all selected users
+    const assignments = selectedUsers.map((userId) => ({
       coach_id: user.id,
-      user_id: formData.user_id,
+      user_id: userId,
       training_type: formData.training_type,
       training_details: formData.training_details,
       assigned_date: new Date().toISOString().split("T")[0],
       target_date: formData.target_date,
       status: "pending",
-    })
+    }))
+
+    const { error } = await supabase.from("training_assignments").insert(assignments)
 
     if (!error) {
       setSuccess(true)
+      setSuccessCount(selectedUsers.length) // Store the actual count
+      setSelectedUsers([])
       setFormData({
-        user_id: "",
         training_type: "",
         training_details: "",
         target_date: new Date().toISOString().split("T")[0],
@@ -99,22 +117,32 @@ export default function CoachTrainingMenuPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="user">Athlete Name</Label>
-                <Select
-                  value={formData.user_id}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, user_id: value }))}
-                >
-                  <SelectTrigger className="focus:border-orange-500 focus:ring-orange-500">
-                    <SelectValue placeholder="Select an athlete" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
+                <div className="flex items-center justify-between">
+                  <Label>Athletes ({selectedUsers.length} selected)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="text-xs bg-transparent"
+                  >
+                    {selectedUsers.length === users.length ? "Deselect All" : "Select All"}
+                  </Button>
+                </div>
+                <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={user.id}
+                        checked={selectedUsers.includes(user.id)}
+                        onCheckedChange={() => handleUserToggle(user.id)}
+                      />
+                      <Label htmlFor={user.id} className="text-sm cursor-pointer flex-1">
                         {user.username} ({user.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -162,17 +190,19 @@ export default function CoachTrainingMenuPage() {
 
               {success && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-green-800 font-medium">Training assignment sent successfully!</p>
+                  <p className="text-green-800 font-medium">
+                    Training assignment sent to {successCount} athlete(s) successfully!
+                  </p>
                 </div>
               )}
 
               <Button
                 type="submit"
-                disabled={loading || !formData.user_id || !formData.training_type}
+                disabled={loading || selectedUsers.length === 0 || !formData.training_type}
                 className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all duration-150"
               >
                 <Send className="h-4 w-4 mr-2" />
-                {loading ? "Sending..." : "Send Training Assignment"}
+                {loading ? "Sending..." : `Send Training Assignment to ${selectedUsers.length} Athlete(s)`}
               </Button>
             </form>
           </CardContent>

@@ -51,12 +51,12 @@ export default function CoachDashboardPage() {
     // Get total users
     const { data: usersData } = await supabase.from("users").select("id").eq("role", "user")
 
-    // Get active assignments
+    // Get active assignments (pending + missed)
     const { data: assignmentsData } = await supabase
       .from("training_assignments")
       .select("id")
       .eq("coach_id", user.id)
-      .eq("status", "pending")
+      .in("status", ["pending", "missed"])
 
     // Get completed activities this week
     const startOfWeek = new Date()
@@ -163,15 +163,17 @@ export default function CoachDashboardPage() {
             </Card>
           </Link>
 
-          <Card className="bg-orange-500 text-white border-0 rounded-2xl">
-            <CardContent className="p-4">
-              <div className="flex flex-col items-start">
-                <Calendar className="h-8 w-8 text-orange-200 mb-2" />
-                <p className="text-2xl md:text-3xl font-bold">{stats.activeAssignments}</p>
-                <p className="text-orange-200 text-sm">Active Assignments</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link href="/coach/active-assignments">
+            <Card className="bg-orange-500 text-white border-0 rounded-2xl cursor-pointer hover:bg-orange-600 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex flex-col items-start">
+                  <Calendar className="h-8 w-8 text-orange-200 mb-2" />
+                  <p className="text-2xl md:text-3xl font-bold">{stats.activeAssignments}</p>
+                  <p className="text-orange-200 text-sm">Active Assignments</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Link href="/coach/training-history">
             <Card className="bg-green-500 text-white border-0 rounded-2xl cursor-pointer hover:bg-green-600 transition-colors">

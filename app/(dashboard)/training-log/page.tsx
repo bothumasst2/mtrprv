@@ -67,17 +67,8 @@ export default function TrainingLogPage() {
       const uniqueTypes = [...new Set(assignments.map((a) => a.training_type))]
       setAvailableTrainingTypes(uniqueTypes)
     } else {
-      // Fallback to all training types if no assignments
-      const allTypes = [
-        "EASY RUN ZONA 2",
-        "LONGRUN",
-        "MEDIUM RUN (SPEED)",
-        "EASY RUN (EZ)",
-        "Strenght session / Running Drills",
-        "FARTLEK RUN ( SPEED )",
-        "INTERVAL RUN ( SPEED )",
-      ]
-      setAvailableTrainingTypes(allTypes)
+      // Clear to all training types if no assignments
+      setAvailableTrainingTypes([])
     }
   }
 
@@ -160,11 +151,17 @@ export default function TrainingLogPage() {
                       <SelectValue placeholder="Select training type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableTrainingTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
+                      {availableTrainingTypes.length > 0 ? (
+                         availableTrainingTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                           {type}
+                          </SelectItem>
+                        ))
+                      ) : (
+                      <div className="text-sm text-gray-400 px-3 py-2">
+                        💤 No training assigned yet by your coach.
+                      </div>
+                    )}         
                     </SelectContent>
                   </Select>
                 </div>

@@ -130,6 +130,23 @@ export default function ActiveAssignmentsPage() {
       </div>
     )
   }
+const handleDelete = async (id: string) => {
+  const confirmed = confirm("Yakin mau HAPUS data?")
+  if (!confirmed) return
+
+  console.log("Deleting ID:", id)
+
+  const { error } = await supabase
+    .from("training_assignments")
+    .delete()
+    .eq("id", id)
+
+  if (error) {
+    console.error("Delete failed:", error)
+  } else {
+    setAssignments((prev) => prev.filter((item) => item.id !== id))
+  }
+}
 
   return (
     <div className="min-h-screen bg-white">
@@ -199,6 +216,17 @@ export default function ActiveAssignmentsPage() {
                         <p className="text-sm text-gray-800">{assignment.training_details}</p>
                       </div>
                     )}
+
+                    {/* ✨ Tombol Delete */}
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(assignment.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

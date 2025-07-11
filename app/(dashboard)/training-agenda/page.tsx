@@ -184,9 +184,8 @@ export default function TrainingAgendaPage() {
 
                   {assignment.training_details && (
                     <div>
-                      <p className="text-gray-600 text-sm mb-1">Training Details</p>
-                      <p className="text-gray-800 bg-gray-50 p-3 rounded-lg">
-                        {assignment.training_details}
+                      <p className="text-gray-800 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap break-words">
+                      {assignment.training_details}
                       </p>
                     </div>
                   )}

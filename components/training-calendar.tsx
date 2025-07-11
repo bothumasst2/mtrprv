@@ -118,7 +118,8 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
+    let startingDayOfWeek = firstDay.getDay()
+    startingDayOfWeek = (startingDayOfWeek + 6) % 7  // Shift: Sun(0) → 6, Mon(1) → 0
 
     const days = []
 
@@ -128,8 +129,22 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       days.push({ day: prevDay, isCurrentMonth: false })
     }
 
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      const prevDate = new Date(year, month, 1 - (startingDayOfWeek - i))
+      days.push({
+        day: prevDate.getDate(),
+        isCurrentMonth: false,
+        dayOfWeek: prevDate.getDay(),
+      })
+    }
+
     for (let day = 1; day <= daysInMonth; day++) {
-      days.push({ day, isCurrentMonth: true })
+      const currentDate = new Date(year, month, day)
+      days.push({
+        day,
+        isCurrentMonth: true,
+        dayOfWeek: currentDate.getDay(),
+      })
     }
 
     return days
@@ -139,7 +154,8 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
     if (!isCurrentMonth) return null
 
     // Create date string in local timezone to match database dates exactly
-    const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split("T")[0]
+    const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+    .toLocaleDateString("sv-SE") // Format: YYYY-MM-DD tanpa UTC offset
     const data = trainingData.find((d) => d.date === dateStr)
 
     if (!data) return null
@@ -200,7 +216,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-1">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
           <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
             {day}
           </div>
@@ -215,7 +231,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
                 dayInfo.isCurrentMonth && dayInfo.day === today.getDate() && isCurrentMonth
                   ? "bg-gray-800 text-white"
                   : dayInfo.isCurrentMonth
-                    ? dayInfo.day % 7 === 0 || dayInfo.day % 7 === 6
+                    ? dayInfo.dayOfWeek === 6
                       ? "text-red-500 font-semibold"
                       : "text-gray-700"
                     : "text-gray-400"

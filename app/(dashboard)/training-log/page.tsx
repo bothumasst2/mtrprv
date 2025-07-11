@@ -182,12 +182,12 @@ export default function TrainingLogPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="strava_link">Link Strava</Label>
-                  <Input
+                  <Label htmlFor="strava_link">URL</Label>
+                  <Input type="url"
                     id="strava_link"
                     value={formData.strava_link}
                     onChange={(e) => setFormData((prev) => ({ ...prev, strava_link: e.target.value }))}
-                    placeholder="Link Strava"
+                    placeholder="Hanya URL Jam atau STRAVA"
                     className="focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>

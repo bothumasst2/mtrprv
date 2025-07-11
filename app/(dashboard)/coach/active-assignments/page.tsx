@@ -61,7 +61,7 @@ export default function ActiveAssignmentsPage() {
         target_date,
         assigned_date,
         status,
-        users (
+        users:user_id (
           id,
           username,
           profile_photo

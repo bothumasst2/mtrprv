@@ -123,27 +123,23 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
 
     const days = []
 
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      const prevMonth = new Date(year, month - 1, 0)
-      const prevDay = prevMonth.getDate() - (startingDayOfWeek - 1 - i)
-      days.push({ day: prevDay, isCurrentMonth: false })
-    }
-
+    // Add previous month days
     for (let i = 0; i < startingDayOfWeek; i++) {
       const prevDate = new Date(year, month, 1 - (startingDayOfWeek - i))
       days.push({
         day: prevDate.getDate(),
         isCurrentMonth: false,
-        dayOfWeek: prevDate.getDay(),
+        dayOfWeek: prevDate.getDay(), // This will be the actual day of week (0=Sunday, 6=Saturday)
       })
     }
 
+    // Add current month days
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(year, month, day)
       days.push({
         day,
         isCurrentMonth: true,
-        dayOfWeek: currentDate.getDay(),
+        dayOfWeek: currentDate.getDay(), // This will be the actual day of week (0=Sunday, 6=Saturday)
       })
     }
 
@@ -231,7 +227,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
                 dayInfo.isCurrentMonth && dayInfo.day === today.getDate() && isCurrentMonth
                   ? "bg-gray-800 text-white"
                   : dayInfo.isCurrentMonth
-                    ? dayInfo.dayOfWeek === 6
+                    ? dayInfo.dayOfWeek === 0 // 0 = Sunday, should be red
                       ? "text-red-500 font-semibold"
                       : "text-gray-700"
                     : "text-gray-400"

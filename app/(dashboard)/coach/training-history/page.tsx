@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle, XCircle, Activity } from "lucide-react"
+import { CheckCircle, XCircle, Activity, Trash2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 function getSafeSrc(src: string | null | undefined) {
@@ -26,6 +26,7 @@ interface TrainingHistoryItem {
 export default function CoachTrainingHistoryPage() {
   const [trainingHistory, setTrainingHistory] = useState<TrainingHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTrainingHistory()
@@ -64,6 +65,44 @@ export default function CoachTrainingHistoryPage() {
     }
 
     setLoading(false)
+  }
+
+  const handleDeleteTraining = async (id: string) => {
+    // Show confirmation dialog
+    const isConfirmed = window.confirm("Yakin mau delete training ini? Data akan terhapus permanen!")
+    
+    if (!isConfirmed) {
+      return // User cancelled
+    }
+    
+    // Set loading state for this specific item
+    setDeletingId(id)
+    
+    try {
+      // Delete from Supabase training_log table
+      const { error } = await supabase
+        .from("training_log")
+        .delete()
+        .eq("id", id)
+
+      if (error) {
+        console.error("Error deleting training:", error)
+        alert("Gagal delete training record: " + error.message)
+        return
+      }
+
+      // Remove from local state immediately for better UX
+      setTrainingHistory(prev => prev.filter(item => item.id !== id))
+      
+      // Show success message
+      alert("Training berhasil dihapus!")
+      
+    } catch (error) {
+      console.error("Error deleting training:", error)
+      alert("Gagal delete training record")
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   if (loading) {
@@ -121,16 +160,32 @@ export default function CoachTrainingHistoryPage() {
                         </p>
                       </div>
                     </div>
-                    {item.strava_link && (
-                      <a
-                        href={item.strava_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-orange-500 text-sm hover:underline"
+                    
+                    <div className="flex items-center gap-3">
+                      {item.strava_link && (
+                        <a
+                          href={item.strava_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-orange-500 text-sm hover:underline"
+                        >
+                          View on Strava
+                        </a>
+                      )}
+                      
+                      <button
+                        onClick={() => handleDeleteTraining(item.id)}
+                        disabled={deletingId === item.id}
+                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete training record"
                       >
-                        View on Strava
-                      </a>
-                    )}
+                        {deletingId === item.id ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

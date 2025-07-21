@@ -27,9 +27,12 @@ interface Assignment {
   }
 }
 
+type FilterStatus = "all" | "pending" | "completed" | "missed"
+
 export default function ActiveAssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeFilter, setActiveFilter] = useState<FilterStatus>("all")
   const { user } = useAuth()
 
   useEffect(() => {
@@ -120,6 +123,62 @@ export default function ActiveAssignmentsPage() {
     }
   }
 
+  const getFilterButtonStyle = (filterType: FilterStatus) => {
+    const baseStyle = "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2"
+    
+    if (activeFilter === filterType) {
+      switch (filterType) {
+        case "completed":
+          return `${baseStyle} bg-green-500 text-white shadow-md`
+        case "missed":
+          return `${baseStyle} bg-red-500 text-white shadow-md`
+        case "pending":
+          return `${baseStyle} bg-blue-500 text-white shadow-md`
+        default:
+          return `${baseStyle} bg-gray-800 text-white shadow-md`
+      }
+    } else {
+      switch (filterType) {
+        case "completed":
+          return `${baseStyle} bg-green-50 text-green-600 hover:bg-green-100 border border-green-200`
+        case "missed":
+          return `${baseStyle} bg-red-50 text-red-600 hover:bg-red-100 border border-red-200`
+        case "pending":
+          return `${baseStyle} bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200`
+        default:
+          return `${baseStyle} bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200`
+      }
+    }
+  }
+
+  const filteredAssignments = assignments.filter(assignment => {
+    if (activeFilter === "all") return true
+    return assignment.status === activeFilter
+  })
+
+  const getStatusCount = (status: FilterStatus) => {
+    if (status === "all") return assignments.length
+    return assignments.filter(a => a.status === status).length
+  }
+
+  const handleDelete = async (id: string) => {
+    const confirmed = confirm("Yakin mau HAPUS data?")
+    if (!confirmed) return
+
+    console.log("Deleting ID:", id)
+
+    const { error } = await supabase
+      .from("training_assignments")
+      .delete()
+      .eq("id", id)
+
+    if (error) {
+      console.error("Delete failed:", error)
+    } else {
+      setAssignments((prev) => prev.filter((item) => item.id !== id))
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -130,23 +189,6 @@ export default function ActiveAssignmentsPage() {
       </div>
     )
   }
-const handleDelete = async (id: string) => {
-  const confirmed = confirm("Yakin mau HAPUS data?")
-  if (!confirmed) return
-
-  console.log("Deleting ID:", id)
-
-  const { error } = await supabase
-    .from("training_assignments")
-    .delete()
-    .eq("id", id)
-
-  if (error) {
-    console.error("Delete failed:", error)
-  } else {
-    setAssignments((prev) => prev.filter((item) => item.id !== id))
-  }
-}
 
   return (
     <div className="min-h-screen bg-white">
@@ -163,21 +205,73 @@ const handleDelete = async (id: string) => {
           </div>
         </div>
 
+        {/* Filter Buttons */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap gap-3 mb-4">
+              <button
+                onClick={() => setActiveFilter("all")}
+                className={getFilterButtonStyle("all")}
+              >
+                <span>All</span>
+                <span className="bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                  {getStatusCount("all")}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveFilter("pending")}
+                className={getFilterButtonStyle("pending")}
+              >
+                <Clock className="h-4 w-4" />
+                <span>Pending</span>
+                <span className="bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                  {getStatusCount("pending")}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveFilter("completed")}
+                className={getFilterButtonStyle("completed")}
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span>Completed</span>
+                <span className="bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                  {getStatusCount("completed")}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveFilter("missed")}
+                className={getFilterButtonStyle("missed")}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span>Missed</span>
+                <span className="bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                  {getStatusCount("missed")}
+                </span>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-800">
-              All Training Assignments ({assignments.length})
+              {activeFilter === "all" ? "All Training Assignments" : `${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)} Assignments`} ({filteredAssignments.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {assignments.length === 0 ? (
+            {filteredAssignments.length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No training assignments found</p>
+                <p className="text-gray-600">
+                  {activeFilter === "all" ? "No training assignments found" : `No ${activeFilter} assignments found`}
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {assignments.map((assignment) => (
+                {filteredAssignments.map((assignment) => (
                   <div key={assignment.id} className="border rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -217,7 +311,7 @@ const handleDelete = async (id: string) => {
                       </div>
                     )}
 
-                    {/* ✨ Tombol Delete */}
+                    {/* Delete Button */}
                     <div className="flex justify-end gap-2 mt-4">
                       <Button
                         variant="destructive"

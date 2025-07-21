@@ -25,8 +25,9 @@ interface AthleteActivity {
   date: string
   training_type: string
   distance: number
-  status: "completed" | "pending" | "missed"
+  status: "completed" | "pending"
   strava_link: string | null
+  assignment_id?: string // ID dari training_assignments jika ada
 }
 
 export default function AthletesPage() {
@@ -107,23 +108,33 @@ export default function AthletesPage() {
           training_type: activity.training_type,
           distance: activity.distance,
           status: "completed",
-          strava_link: activity.strava_link
+          strava_link: activity.strava_link,
+          assignment_id: activity.assignment_id // Jika ada reference ke assignment
         })
       })
     }
 
-    // Add assigned activities (pending/missed)
+    // Add assigned activities (pending/missed) yang belum dikerjakan
     if (assignedActivities) {
       assignedActivities.forEach(activity => {
-        // Check if this assignment is already completed in training_log
-        const isCompleted = completedActivities?.some(completed => 
-          completed.date === (activity.target_date || activity.date) && 
-          completed.training_type === activity.training_type &&
-          completed.user_id === activity.user_id
-        )
+        // Cek apakah assignment ini sudah dikerjakan dengan berbagai cara pencocokan
+        const isCompleted = completedActivities?.some(completed => {
+          // Method 1: Cocokkan berdasarkan assignment_id jika ada
+          if (completed.assignment_id && completed.assignment_id === activity.id) {
+            return true
+          }
+          
+          // Method 2: Cocokkan berdasarkan tanggal, tipe latihan, dan user
+          const completedDate = new Date(completed.date).toDateString()
+          const assignmentDate = new Date(activity.target_date || activity.date).toDateString()
+          
+          return completedDate === assignmentDate && 
+                 completed.training_type === activity.training_type &&
+                 completed.user_id === activity.user_id
+        })
 
+        // Jika belum dikerjakan, tambahkan sebagai pending (hanya yang belum lewat tanggal)
         if (!isCompleted) {
-          // Determine if it's pending or missed based on target date
           const targetDate = new Date(activity.target_date || activity.date)
           const today = new Date()
           
@@ -131,16 +142,18 @@ export default function AthletesPage() {
           today.setHours(0, 0, 0, 0)
           targetDate.setHours(0, 0, 0, 0)
           
-          const status = targetDate < today ? "missed" : "pending"
-
-          allActivities.push({
-            id: activity.id,
-            date: activity.target_date || activity.date,
-            training_type: activity.training_type,
-            distance: activity.distance,
-            status: status,
-            strava_link: null
-          })
+          // Hanya tampilkan yang pending (belum lewat tanggal), skip yang missed
+          if (targetDate >= today) {
+            allActivities.push({
+              id: activity.id,
+              date: activity.target_date || activity.date,
+              training_type: activity.training_type,
+              distance: activity.distance,
+              status: "pending",
+              strava_link: null,
+              assignment_id: activity.id
+            })
+          }
         }
       })
     }
@@ -205,9 +218,7 @@ export default function AthletesPage() {
                           className={`w-3 h-3 rounded-full ${
                             activity.status === "completed"
                               ? "bg-green-500"
-                              : activity.status === "missed"
-                                ? "bg-red-500"
-                                : "bg-blue-500"
+                              : "bg-blue-500"
                           }`}
                         />
                         <div>
@@ -222,9 +233,7 @@ export default function AthletesPage() {
                           className={`text-sm font-medium ${
                             activity.status === "completed"
                               ? "text-green-600"
-                              : activity.status === "missed"
-                                ? "text-red-600"
-                                : "text-blue-600"
+                              : "text-blue-600"
                           }`}
                         >
                           {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}

@@ -311,16 +311,18 @@ export default function ActiveAssignmentsPage() {
                       </div>
                     )}
 
-                    {/* Delete Button */}
-                    <div className="flex justify-end gap-2 mt-4">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(assignment.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                    {/* Delete Button - Only show if not completed */}
+                    {assignment.status !== "completed" && (
+                      <div className="flex justify-end gap-2 mt-4">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(assignment.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

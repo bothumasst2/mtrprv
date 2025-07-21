@@ -41,12 +41,50 @@ export default function ActiveAssignmentsPage() {
     }
   }, [user])
 
+  // Add effect to check for missed assignments periodically
+  useEffect(() => {
+    if (user && assignments.length > 0) {
+      const checkMissedAssignments = () => {
+        const today = new Date().toISOString().split("T")[0]
+        let hasUpdates = false
+        
+        const updatedAssignments = assignments.map(assignment => {
+          if (assignment.status === "pending" && assignment.target_date < today) {
+            hasUpdates = true
+            return { ...assignment, status: "missed" as const }
+          }
+          return assignment
+        })
+        
+        if (hasUpdates) {
+          setAssignments(updatedAssignments)
+          // Also update in database
+          updateMissedStatusInDB()
+        }
+      }
+
+      checkMissedAssignments()
+    }
+  }, [assignments, user])
+
+  const updateMissedStatusInDB = async () => {
+    if (!user) return
+    const today = new Date().toISOString().split("T")[0]
+    
+    await supabase
+      .from("training_assignments")
+      .update({ status: "missed" })
+      .eq("coach_id", user.id)
+      .eq("status", "pending")
+      .lt("target_date", today)
+  }
+
   const fetchAssignments = async () => {
     if (!user) return
 
     const today = new Date().toISOString().split("T")[0]
 
-    // Update missed status first
+    // Update missed status first - any pending assignment past target date becomes missed
     await supabase
       .from("training_assignments")
       .update({ status: "missed" })

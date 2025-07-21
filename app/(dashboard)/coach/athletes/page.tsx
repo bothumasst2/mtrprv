@@ -43,20 +43,35 @@ export default function AthletesPage() {
     const { data } = await supabase.from("users").select("id, username, email, profile_photo").eq("role", "user")
 
     if (data) {
-      // Get workout counts for each athlete
+      // Get workout counts for each athlete from both tables
       const athletesWithStats = await Promise.all(
         data.map(async (athlete) => {
-          const { data: workouts } = await supabase
+          // Get completed workouts
+          const { data: completedWorkouts } = await supabase
             .from("training_log")
-            .select("id, date")
+            .select("id, date, status")
             .eq("user_id", athlete.id)
-            .eq("status", "completed")
 
-          const lastActivity = workouts && workouts.length > 0 ? workouts[workouts.length - 1].date : null
+          // Get assigned workouts with target_date
+          const { data: assignedWorkouts } = await supabase
+            .from("training_assignments")
+            .select("id, date, target_date")
+            .eq("user_id", athlete.id)
+
+          // Combine and get total count
+          const totalActivities = (completedWorkouts?.length || 0) + (assignedWorkouts?.length || 0)
+
+          // Get the most recent activity date from both tables
+          const allDates: string[] = []
+          if (completedWorkouts) allDates.push(...completedWorkouts.map(w => w.date))
+          if (assignedWorkouts) allDates.push(...assignedWorkouts.map(w => w.target_date || w.date))
+          
+          allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+          const lastActivity = allDates.length > 0 ? allDates[0] : null
 
           return {
             ...athlete,
-            total_workouts: workouts?.length || 0,
+            total_workouts: totalActivities,
             last_activity: lastActivity,
           }
         }),
@@ -68,14 +83,72 @@ export default function AthletesPage() {
   }
 
   const fetchAthleteActivities = async (athleteId: string) => {
-    const { data } = await supabase
+    // Fetch completed activities from training_log
+    const { data: completedActivities } = await supabase
       .from("training_log")
       .select("*")
       .eq("user_id", athleteId)
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false })
 
-    setAthleteActivities(data || [])
+    // Fetch pending/missed activities from training_assignments
+    const { data: assignedActivities } = await supabase
+      .from("training_assignments")
+      .select("*")
+      .eq("user_id", athleteId)
+
+    // Combine both datasets
+    const allActivities: AthleteActivity[] = []
+
+    // Add completed activities
+    if (completedActivities) {
+      completedActivities.forEach(activity => {
+        allActivities.push({
+          id: activity.id,
+          date: activity.date,
+          training_type: activity.training_type,
+          distance: activity.distance,
+          status: "completed",
+          strava_link: activity.strava_link
+        })
+      })
+    }
+
+    // Add assigned activities (pending/missed)
+    if (assignedActivities) {
+      assignedActivities.forEach(activity => {
+        // Check if this assignment is already completed in training_log
+        const isCompleted = completedActivities?.some(completed => 
+          completed.date === (activity.target_date || activity.date) && 
+          completed.training_type === activity.training_type &&
+          completed.user_id === activity.user_id
+        )
+
+        if (!isCompleted) {
+          // Determine if it's pending or missed based on target date
+          const targetDate = new Date(activity.target_date || activity.date)
+          const today = new Date()
+          
+          // Set today to start of day to compare dates accurately
+          today.setHours(0, 0, 0, 0)
+          targetDate.setHours(0, 0, 0, 0)
+          
+          const status = targetDate < today ? "missed" : "pending"
+
+          allActivities.push({
+            id: activity.id,
+            date: activity.target_date || activity.date,
+            training_type: activity.training_type,
+            distance: activity.distance,
+            status: status,
+            strava_link: null
+          })
+        }
+      })
+    }
+
+    // Sort by date (most recent first)
+    allActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    setAthleteActivities(allActivities)
   }
 
   const handleAthleteClick = (athlete: Athlete) => {

@@ -132,30 +132,30 @@ export default function CoachDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-strava-dark">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Coach Dashboard</h1>
-          <div className="text-center py-8">Loading dashboard...</div>
+          <h1 className="text-xl md:text-3xl font-bold text-strava">Coach Dashboard</h1>
+          <div className="text-center py-8 text-strava">Loading Data...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Coach Dashboard</h1>
-          <p className="text-gray-600 mt-2">Overview of all your athletes and their progress</p>
+          <h1 className="text-xl md:text-4xl font-bold text-strava">Coach Dashboard</h1>
+          <p className="text-sm text-white mt-0">Overview of all your athletes and their progress</p>
         </div>
 
         {/* Clickable Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link href="/coach/athletes">
-            <Card className="bg-blue-600 text-white border-0 rounded-2xl cursor-pointer hover:bg-blue-700 transition-colors">
+            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Users className="h-8 w-8 text-blue-200 mb-2" />
+                  <Users className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.totalUsers}</p>
                   <p className="text-blue-200 text-sm">Total Athletes</p>
                 </div>
@@ -164,67 +164,69 @@ export default function CoachDashboardPage() {
           </Link>
 
           <Link href="/coach/active-assignments">
-            <Card className="bg-orange-500 text-white border-0 rounded-2xl cursor-pointer hover:bg-orange-600 transition-colors">
+            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Calendar className="h-8 w-8 text-orange-200 mb-2" />
+                  <Calendar className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.activeAssignments}</p>
-                  <p className="text-orange-200 text-sm">Active Assignments</p>
+                  <p className="text-white text-sm">Active Assignments</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/coach/training-history">
-            <Card className="bg-green-500 text-white border-0 rounded-2xl cursor-pointer hover:bg-green-600 transition-colors">
+            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Activity className="h-8 w-8 text-green-200 mb-2" />
+                  <Activity className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.completedThisWeek}</p>
-                  <p className="text-green-200 text-sm">Completed This Week</p>
+                  <p className="text-white text-sm">Completed This Week</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
-          <Card className="bg-purple-500 text-white border-0 rounded-2xl">
+          <Link href="/ranking">
+          <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
             <CardContent className="p-4">
               <div className="flex flex-col items-start">
-                <TrendingUp className="h-8 w-8 text-purple-200 mb-2" />
+                <TrendingUp className="h-8 w-8 text-white mb-2" />
                 <p className="text-2xl md:text-3xl font-bold">{stats.totalDistance}</p>
-                <p className="text-purple-200 text-sm">Total Distance (km)</p>
+                <p className="text-white text-sm">Total Distance (km)</p>
               </div>
             </CardContent>
           </Card>
+          </Link>
         </div>
 
         {/* User Activities - Only show if there are active users */}
         {userActivities.length > 0 && (
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-[#303030] rounded-2xl shadow-sm border border-none">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Recent User Activities</CardTitle>
+              <CardTitle className="text-lg font-semibold text-white">Recent User Activities</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {userActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                  <div key={activity.id} className="flex items-center justify-between p-4 bg-strava-dark rounded-2xl">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={getSafeSrc(activity.profile_photo) || "/placeholder.svg"} />
-                        <AvatarFallback className="bg-orange-500 text-white">
+                        <AvatarFallback className="bg-white-500 text-white">
                           {activity.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-gray-800">{activity.username}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-white">{activity.username}</p>
+                        <p className="text-sm text-gray-500">
                           Last activity: {new Date(activity.last_activity).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-800">{activity.total_distance}km</p>
-                      <p className="text-sm text-gray-600">Total distance</p>
+                      <p className="font-bold text-strava">{activity.total_distance} km</p>
+                      <p className="text-xs text-gray-600">Total distance</p>
                     </div>
                   </div>
                 ))}

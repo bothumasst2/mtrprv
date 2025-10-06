@@ -100,17 +100,17 @@ export default function CoachTrainingMenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training Menu</h1>
-          <p className="text-gray-600 mt-2">Assign training programs to your athletes</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-strava">Training Menu</h1>
+          <p className="text-md text-gray-600 mt-0">Assign training programs to your athletes</p>
         </div>
 
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <Card className="bg-strava-grey rounded-xl shadow-sm border border-none">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <Plus className="h-5 w-5 text-orange-500" />
+              <Plus className="h-5 w-5 text-strava font-black" />
               Assign Training
             </CardTitle>
           </CardHeader>
@@ -124,12 +124,12 @@ export default function CoachTrainingMenuPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleSelectAll}
-                    className="text-xs bg-transparent"
+                    className="text-xs bg-strava"
                   >
                     {selectedUsers.length === users.length ? "Deselect All" : "Select All"}
                   </Button>
                 </div>
-                <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
+                <div className="bg-white border rounded-md p-4 max-h-48 overflow-y-auto space-y-2">
                   {users.map((user) => (
                     <div key={user.id} className="flex items-center space-x-2">
                       <Checkbox
@@ -138,7 +138,7 @@ export default function CoachTrainingMenuPage() {
                         onCheckedChange={() => handleUserToggle(user.id)}
                       />
                       <Label htmlFor={user.id} className="text-sm cursor-pointer flex-1">
-                        {user.username} ({user.email})
+                        {user.username}
                       </Label>
                     </div>
                   ))}
@@ -199,7 +199,7 @@ export default function CoachTrainingMenuPage() {
               <Button
                 type="submit"
                 disabled={loading || selectedUsers.length === 0 || !formData.training_type}
-                className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all duration-150"
+                className="w-full bg-strava hover:bg-strava-light active:scale-95 transition-all duration-150"
               >
                 <Send className="h-4 w-4 mr-2" />
                 {loading ? "Sending..." : `Send Training Assignment to ${selectedUsers.length} Athlete(s)`}

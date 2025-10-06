@@ -77,7 +77,7 @@ export default function RankingPage() {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="h-6 w-6 text-yellow-500" />
+        return <Trophy className="h-6 w-6 text-strava" />
       case 2:
         return <Medal className="h-6 w-6 text-gray-400" />
       case 3:
@@ -90,11 +90,11 @@ export default function RankingPage() {
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return "bg-gradient-to-r from-yellow-400 to-yellow-600"
+        return "bg-gradient-to-r from-yellow-400 to-yellow-500"
       case 2:
         return "bg-gradient-to-r from-gray-300 to-gray-500"
       case 3:
-        return "bg-gradient-to-r from-amber-400 to-amber-600"
+        return "bg-gradient-to-r from-amber-600 to-amber-700"
       default:
         return "bg-gray-800"
     }
@@ -102,29 +102,26 @@ export default function RankingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-strava-dark">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Ranking</h1>
-          <div className="text-center py-8">Loading rankings...</div>
+          <h1 className="text-2xl md:text-3xl font-bold text-strava">Ranking</h1>
+          <div className="text-white text-center py-8">Loading rankings...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Ranking</h1>
-          <p className="text-gray-600 mt-2">All-time ranking based on total accumulated distance</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-strava">Ranking</h1>
+          <p className="text-sm text-gray-600 mt-1">All-time ranking based on total accumulated distance</p>
         </div>
 
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">All-Time Rankings</CardTitle>
-          </CardHeader>
+        <Card className="bg-strava-grey rounded-md shadow-sm border border-none py-2">
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {rankings.map((user) => (
                 <div
                   key={user.id}
@@ -140,7 +137,6 @@ export default function RankingPage() {
                     </Avatar>
                     <div>
                       <p className="font-semibold">{user.username}</p>
-                      <p className="text-sm opacity-90">{user.total_distance.toFixed(1)} km total</p>
                     </div>
                   </div>
                   <div className="text-right">

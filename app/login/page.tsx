@@ -62,19 +62,19 @@ export default function LoginPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-strava px-4">
+      <Card className="w-full bg-strava-dark max-w-md border-none rounded-2xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <MTRLogo className="w-32 h-24 mx-auto" />
+          <div className="mx-auto mb-0">
+            <MTRLogo className="w-40 h-32 fill-white mx-auto" />
           </div>
-          <CardTitle className="text-2xl font-bold">MTR Private Training</CardTitle>
+          <CardTitle className="text-2xl text-strava font-bold">MTR Private Training</CardTitle>
           <CardDescription>Sign in to your training account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-2 text-white">
+              <Label htmlFor="email">Email :</Label>
               <Input
                 id="email"
                 type="email"
@@ -82,11 +82,11 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="Enter your email"
-                className="focus:border-orange-500 focus:ring-orange-500"
+                className="text-black focus:border-orange-500 focus:ring-orange-500"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="text-white space-y-2">
+              <Label htmlFor="password">Password :</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -95,7 +95,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter your password"
-                  className="focus:border-orange-500 focus:ring-orange-500 pr-10"
+                  className="text-black focus:border-orange-500 focus:ring-orange-500 pr-10"
                 />
                 <button
                   type="button"
@@ -106,27 +106,30 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 text-strava">
               <Checkbox
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              />
+                className="border-strava text-strava data-[state=checked]:bg-strava data-[state=checked]:border-strava"/>
               <Label htmlFor="remember" className="text-sm">
                 Remember me
               </Label>
             </div>
             {error && (
-              <div className="flex items-center gap-2 text-red-600 text-sm">
+              <div className="flex items-center gap-2 text-strava text-sm">
                 <AlertCircle className="h-4 w-4" />
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#bfbdbd] hover:bg-strava text-grey" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
+         <div className="flex text-xs items-center space-x-2 text-strava-light justify-center pt-4 py-6">
+          © 2025 - App development by elbruz
+         </div>
       </Card>
     </div>
   )

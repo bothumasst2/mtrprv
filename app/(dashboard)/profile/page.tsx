@@ -192,22 +192,22 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Profile</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-strava">Profile</h1>
 
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 relative">
+        <Card className="bg-strava-darkgrey rounded-lg shadow-sm border border-none relative">
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             onClick={() => setIsEditing(!isEditing)}
-            className="absolute top-4 right-4 p-2 hover:bg-orange-50"
+            className="absolute top-5 right-4 p-2 hover:bg-white"
           >
-            <Edit className="h-4 w-4 text-orange-500" />
+            <Edit className="h-4 w-4 text-strava" />
           </Button>
 
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Profile Information</CardTitle>
+            <CardTitle className="text-lg font-semibold text-white">My Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
@@ -237,17 +237,17 @@ export default function ProfilePage() {
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+              <div className="text-strava space-y-2">
+                <Label htmlFor="username">Name : </Label>
                 <Input
                   id="username"
                   value={profile.username}
                   onChange={(e) => setProfile((prev) => ({ ...prev, username: e.target.value }))}
                   disabled={!isEditing}
-                  className="focus:border-orange-500 focus:ring-orange-500"
+                  className="text-black font-bold focus:border-orange-500 focus:ring-orange-500"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="text-strava space-y-2">
                 <Label htmlFor="strava">Strava Link</Label>
                 {!isEditing && profile.strava_link && isValidUrl(profile.strava_link) ? (
                   <a
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                     onChange={(e) => setProfile((prev) => ({ ...prev, strava_link: e.target.value }))}
                     disabled={!isEditing}
                     placeholder="https://strava.com/athletes/..."
-                    className="focus:border-orange-500 focus:ring-orange-500"
+                    className="text-black font-bold focus:border-orange-500 focus:ring-orange-500"
                   />
                 )}
               </div>
@@ -284,27 +284,27 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <Card className="bg-strava-darkgrey rounded-lg shadow-sm border border-none">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Training History</CardTitle>
+            <CardTitle className="text-md font-normal text-white">Training History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {trainingHistory.map((training) => (
                 <div
                   key={training.id}
-                  className="flex items-center justify-between p-4 bg-gray-800 rounded-2xl text-white"
+                  className="flex items-center justify-between p-4 bg-strava rounded-lg text-white"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {training.status === "completed" ? (
                       <CheckCircle className="h-6 w-6 text-green-400" />
                     ) : (
                       <XCircle className="h-6 w-6 text-red-400" />
                     )}
                     <div>
-                      <p className="font-medium">{training.training_type}</p>
-                      <p className="text-sm text-gray-400">
-                        {training.distance}km • {new Date(training.date).toLocaleDateString()}
+                      <p className="font-bold">{training.training_type}</p>
+                      <p className="text-sm text-white">
+                        {training.distance} km - {new Date(training.date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>

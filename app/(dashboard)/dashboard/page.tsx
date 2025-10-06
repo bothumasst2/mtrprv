@@ -80,35 +80,35 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="px-4 py-6 space-y-6">
-        <div className="max-w-md mx-auto md:max-w-full">
+    <div className="min-h-screen bg-strava-dark">
+      <div className="px-4 py-6 space-y-2">
+        <div className="w-full mx-auto">
           <TrainingCalendar />
         </div>
 
         {/* Clickable Stats Cards */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2">
           <Link href="/training-log">
-            <Card className="bg-gray-800 text-white border-0 rounded-2xl cursor-pointer hover:bg-gray-700 transition-colors">
+            <Card className="bg-strava-darkgrey text-white border-0 rounded-lg cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Activity className="h-8 w-8 text-green-400 mb-2" />
-                  <p className="text-3xl md:text-4xl font-bold text-green-400">{stats.totalWorkouts}</p>
+                  <Activity className="h-8 w-8 text-strava mb-2" />
+                  <p className="text-4xl md:text-4xl font-bold text-strava">{stats.totalWorkouts}</p>
                   <p className="text-white font-semibold text-sm md:text-base">Total Workout</p>
-                  <p className="text-green-400 text-xs">accumulation of activities</p>
+                  <p className="text-gray-400 text-xs">Accumulation of your activities</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/training-agenda">
-            <Card className="bg-gray-800 text-white border-0 rounded-2xl cursor-pointer hover:bg-gray-700 transition-colors">
+            <Card className="bg-strava-darkgrey text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Target className="h-8 w-8 text-blue-400 mb-2" />
-                  <p className="text-3xl md:text-4xl font-bold text-blue-400">{stats.weeklyTraining}</p>
+                  <Target className="h-8 w-8 text-strava mb-2" />
+                  <p className="text-4xl md:text-4xl font-bold text-strava">{stats.weeklyTraining}</p>
                   <p className="text-white font-semibold text-sm md:text-base">Weekly Training</p>
-                  <p className="text-blue-400 text-xs">Training Task</p>
+                  <p className="text-gray-400 text-xs">Your Training Task</p>
                 </div>
               </CardContent>
             </Card>
@@ -116,21 +116,21 @@ export default function DashboardPage() {
         </div>
 
         {/* Upload Button */}
-        <div className="py-2">
+        <div className="py-1">
           <Link href="/training-log">
-            <button className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-6 text-lg rounded-2xl border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center">
+            <button className="font-bold w-full bg-strava hover:bg-strava-white active:bg-orange-700 text-white py-6 text-lg rounded-lg border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center">
               <Plus className="h-6 w-6 mr-2" />
-              Upload Training
+              UPLOAD TRAINING
             </button>
           </Link>
         </div>
 
         {/* Training Tasks */}
-        <div className="bg-gray-100 rounded-2xl p-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Training Task</h3>
+        <div className="bg-strava-darkgrey rounded-lg p-4">
+          <h3 className="text-sm font-medium text-strava mb-4">Training Task</h3>
           <div className="space-y-3">
             {recentTasks.map((task) => (
-              <div key={task.id} className="bg-gray-800 rounded-2xl p-4 text-white">
+              <div key={task.id} className="bg-strava-grey rounded-lg p-4 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {task.status === "completed" ? (
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                         <CheckCircle className="h-5 w-5 text-white" />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-strava rounded-full flex items-center justify-center">
                         <XCircle className="h-5 w-5 text-white" />
                       </div>
                     )}
@@ -146,9 +146,9 @@ export default function DashboardPage() {
                   </div>
                   <Link
                     href="/training-log"
-                    className="flex items-center gap-1 text-orange-500 text-sm hover:underline"
+                    className="flex items-center gap-1 text-strava text-sm hover:text-strava transition-colors"
                   >
-                    More Details
+                    See More
                     <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>

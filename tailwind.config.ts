@@ -62,7 +62,15 @@ const config: Config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+			strava: {
+      			DEFAULT: '#fc4c02', // Warna utama Strava orange
+      			dark: '#191919',    // Hitam khas Strava (kadang dipakai di brand)
+      			light: '#fc7232',   // Versi lembut, opsional
+				grey: '#8f8f8f',
+				white: '#b5b5b5',
+				darkgrey: '#363636'
+    			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

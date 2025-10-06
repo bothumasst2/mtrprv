@@ -87,7 +87,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Clickable Stats Cards */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 items-stretch">
           <Link href="/training-log">
             <Card className="bg-strava-darkgrey text-white border-0 rounded-lg cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">

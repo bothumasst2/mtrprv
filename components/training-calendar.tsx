@@ -188,49 +188,49 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
     currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear()
 
   return (
-    <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
+    <div className="bg-strava-grey rounded-lg p-2 shadow-sm border border-none">
       <div className="flex items-center justify-between mb-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigateMonth("prev")}
-          className="p-1 hover:bg-orange-100 active:scale-95 transition-all duration-150"
+          className="p- hover:bg-strava-darkgrey active:scale-95 transition-all duration-150"
         >
-          <ChevronLeft className="h-4 w-4 text-orange-500" />
+          <ChevronLeft className="h-6 w-6 text-strava" />
         </Button>
-        <h3 className="font-semibold text-base text-gray-800">
+        <h3 className="font-semibold text-base text-strava">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigateMonth("next")}
-          className="p-1 hover:bg-orange-100 active:scale-95 transition-all duration-150"
+          className="p-2 hover:bg-strava-darkgrey active:scale-95 transition-all duration-150"
         >
-          <ChevronRight className="h-4 w-4 text-orange-500" />
+          <ChevronRight className="h-6 w-6 text-strava" />
         </Button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-1">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+          <div key={day} className="text-center text-xs font-medium text-white py-1">
             {day}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-2">
         {days.map((dayInfo, index) => (
           <div key={index} className="aspect-square">
             <button
-              className={`w-full h-full flex flex-col items-center justify-center text-xs md:text-sm rounded-lg hover:bg-gray-100 transition-colors ${
+              className={`w-full h-full flex flex-col items-center justify-center text-sm md:text-sm rounded-lg hover:bg-strava-darkgrey transition-colors ${
                 dayInfo.isCurrentMonth && dayInfo.day === today.getDate() && isCurrentMonth
-                  ? "bg-gray-800 text-white"
+                  ? "bg-strava text-white"
                   : dayInfo.isCurrentMonth
                     ? dayInfo.dayOfWeek === 0 // 0 = Sunday, should be red
-                      ? "text-red-500 font-semibold"
-                      : "text-gray-700"
-                    : "text-gray-400"
+                      ? "text-strava font-semibold"
+                      : "text-white"
+                    : "text-strava-white"
               }`}
               onClick={() => {
                 if (dayInfo.isCurrentMonth) {

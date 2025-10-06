@@ -4,7 +4,6 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { MTRLogo } from "@/components/mtr-logo"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
@@ -21,14 +20,13 @@ function HeaderContent() {
   const { profilePhoto } = useProfile()
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
+    <header className="sticky top-0 z-40 bg-white/40 backdrop-blur border-b border-none px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <SidebarTrigger className="md:hidden" />
-          <MTRLogo className="h-12 w-16" />
+          <MTRLogo className="fill-black h-12 w-26" />
         </div>
         <Link href="/profile">
-          <Avatar className="h-12 w-12 border-4 border-orange-500 cursor-pointer hover:border-orange-600 transition-colors">
+          <Avatar className="h-12 w-12 border-2 border-orange-500 cursor-pointer hover:border-orange-600 transition-colors">
             <AvatarImage src={getSafeSrc(profilePhoto) || "/placeholder.svg"} />
             <AvatarFallback className="bg-orange-500 text-white">
               {(user?.email?.[0] || "U").toUpperCase()}
@@ -122,12 +120,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
+    <div className="min-h-screen bg-gray-50/30">
+      <HeaderContent />
+      <main className="pb-20">{children}</main>
       <AppSidebar />
-      <SidebarInset>
-        <HeaderContent />
-        <main className="flex-1">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   )
 }

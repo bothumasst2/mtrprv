@@ -176,10 +176,10 @@ export default function AthletesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-strava-dark">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Athletes</h1>
-          <div className="text-center py-8">Loading athletes...</div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Athletes</h1>
+          <div className="text-white text-center py-8">Loading athletes...</div>
         </div>
       </div>
     )
@@ -187,21 +187,20 @@ export default function AthletesPage() {
 
   if (selectedAthlete) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-strava-dark">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <div className="flex items-center gap-4">
+          <div className="text-strava flex items-center gap-4">
             <Button variant="ghost" onClick={handleBackToList} className="p-2">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{selectedAthlete.username}</h1>
-              <p className="text-gray-600">Activity History</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-strava">{selectedAthlete.username}</h1>
+              <p className="text-white text-sm">Activity History</p>
             </div>
           </div>
-
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-[#303030] rounded-xl shadow-sm border-none">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Training Activities</CardTitle>
+              <CardTitle className="text-lg font-semibold text-white">Training Activities</CardTitle>
             </CardHeader>
             <CardContent>
               {athleteActivities.length === 0 ? (
@@ -212,7 +211,7 @@ export default function AthletesPage() {
               ) : (
                 <div className="space-y-3">
                   {athleteActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-2xl">
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-3 h-3 rounded-full ${
@@ -261,11 +260,11 @@ export default function AthletesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Athletes</h1>
-          <p className="text-gray-600 mt-2">Manage and view your athletes' progress</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-strava">Athletes</h1>
+          <p className="text-sm text-gray-600 mt-1">Manage and view your athletes progress</p>
         </div>
 
         {athletes.length === 0 ? (
@@ -277,11 +276,11 @@ export default function AthletesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {athletes.map((athlete) => (
               <Card
                 key={athlete.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow"
+                className="bg-strava-darkgrey rounded-xl shadow-sm border border-none cursor-pointer hover:bg-strava hover:shadow-md transition-shadow"
                 onClick={() => handleAthleteClick(athlete)}
               >
                 <CardContent className="p-6">
@@ -293,18 +292,18 @@ export default function AthletesPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-gray-800">{athlete.username}</h3>
-                      <p className="text-sm text-gray-600">{athlete.email}</p>
+                      <h3 className="font-semibold text-white">{athlete.username}</h3>
+                      <p className="text-sm text-gray-400">{athlete.email}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">Total Workouts</p>
-                      <p className="font-bold text-green-600">{athlete.total_workouts}</p>
+                      <p className="text-gray-400">Total Workouts</p>
+                      <p className="text-lg font-bold text-white">{athlete.total_workouts}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Last Activity</p>
-                      <p className="font-medium text-gray-800">
+                      <p className="text-gray-400">Last Activity</p>
+                      <p className="font-medium text-white">
                         {athlete.last_activity ? new Date(athlete.last_activity).toLocaleDateString() : "None"}
                       </p>
                     </div>

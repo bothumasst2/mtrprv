@@ -121,11 +121,11 @@ export default function TrainingAgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training Agenda</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-lg md:text-3xl font-bold text-strava">Training Agenda</h1>
+          <p className="text-sm text-gray-500 mt-0">
             Your assigned training schedule from your coach
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function TrainingAgendaPage() {
         {loading ? (
           <div className="text-center py-8">Loading training agenda...</div>
         ) : assignments.length === 0 ? (
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-strava-grey rounded-lg shadow-sm border border-none">
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
@@ -149,11 +149,11 @@ export default function TrainingAgendaPage() {
             {assignments.map((assignment) => (
               <Card
                 key={assignment.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100"
+                className="bg-strava-darkgrey rounded-2xl shadow-sm border border-none"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
                       {getStatusIcon(assignment.status)}
                       {assignment.training_type}
                     </CardTitle>
@@ -169,22 +169,22 @@ export default function TrainingAgendaPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">Target Date</p>
-                      <p className="font-medium">
+                      <p className="text-white text-sm">Target Date</p>
+                      <p className="text-strava font-bold">
                         {new Date(assignment.target_date).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Assigned Date</p>
-                      <p className="font-medium">
+                      <p className="text-white text-sm">Assigned Date</p>
+                      <p className="text-strava font-bold">
                         {new Date(assignment.assigned_date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
 
                   {assignment.training_details && (
-                    <div>
-                      <p className="text-gray-800 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap break-words">
+                      <div className="flex items-center gap-2">
+                      <p className="text-sm text-gray-800 bg-strava-grey p-3 rounded-sm whitespace-pre-wrap break-words">
                       {assignment.training_details}
                       </p>
                     </div>

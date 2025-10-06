@@ -107,26 +107,26 @@ export default function CoachTrainingHistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-strava-dark">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training History</h1>
-          <div className="text-center py-8">Loading training history...</div>
+          <h1 className="text-2xl md:text-3xl font-bold text-strava">Training History</h1>
+          <div className="text-white text-center py-8">Loading training history...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training History</h1>
-          <p className="text-gray-600 mt-2">All athletes' training activities</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-strava">Training History</h1>
+          <p className="text-sm text-gray-600 mt-1">All athletes' training activities</p>
         </div>
 
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <Card className="bg-strava-grey rounded-lg shadow-sm border border-none">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Recent Training Activities</CardTitle>
+            <CardTitle className="text-md font-semibold text-gray-800">Recent Training Activities</CardTitle>
           </CardHeader>
           <CardContent>
             {trainingHistory.length === 0 ? (
@@ -135,27 +135,27 @@ export default function CoachTrainingHistoryPage() {
                 <p className="text-gray-600">No training activities found</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {trainingHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-4 bg-gray-800 rounded-2xl text-white"
+                    className="flex items-center justify-between p-4 bg-strava-dark rounded-2xl text-white"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={getSafeSrc(item.user.profile_photo) || "/placeholder.svg"} />
-                        <AvatarFallback className="bg-orange-500 text-white">
+                        <AvatarFallback className="bg-strava text-white">
                           {item.user.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       {item.status === "completed" ? (
-                        <CheckCircle className="h-6 w-6 text-green-400" />
+                        <CheckCircle className="h-6 w-6 text-strava" />
                       ) : (
-                        <XCircle className="h-6 w-6 text-red-400" />
+                        <XCircle className="h-6 w-6 text-gray-400" />
                       )}
                       <div>
-                        <p className="font-medium">{item.training_type}</p>
-                        <p className="text-sm text-gray-400">
+                        <p className="font-small">{item.training_type}</p>
+                        <p className="text-xs text-gray-400">
                           {item.user.username} • {item.distance}km • {new Date(item.date).toLocaleDateString()}
                         </p>
                       </div>
@@ -167,7 +167,7 @@ export default function CoachTrainingHistoryPage() {
                           href={item.strava_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-orange-500 text-sm hover:underline"
+                          className="text-strava-grey text-xs hover:text-strava"
                         >
                           View on Strava
                         </a>
@@ -176,7 +176,7 @@ export default function CoachTrainingHistoryPage() {
                       <button
                         onClick={() => handleDeleteTraining(item.id)}
                         disabled={deletingId === item.id}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-strava-light hover:text-strava hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete training record"
                       >
                         {deletingId === item.id ? (

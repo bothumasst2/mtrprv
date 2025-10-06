@@ -110,13 +110,13 @@ export default function TrainingLogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Training Log</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-white">Training Log</h1>
           <Button
             onClick={() => setShowForm(!showForm)}
-            className="bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all duration-150"
+            className="font-semibold bg-strava hover:bg-strava-white active:bg-orange-700scale-95 transition-all duration-150"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Training
@@ -124,7 +124,7 @@ export default function TrainingLogPage() {
         </div>
 
         {showForm && (
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-white rounded-lg shadow-sm border border-gray-100">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-800">Upload Data Training</CardTitle>
             </CardHeader>
@@ -185,12 +185,12 @@ export default function TrainingLogPage() {
                     value={formData.strava_link}
                     onChange={(e) => setFormData((prev) => ({ ...prev, strava_link: e.target.value }))}
                     placeholder="Hanya URL Jam atau STRAVA"
-                    className="focus:border-orange-500 focus:ring-orange-500"
+                    className="focus:strava focus:ring-orange-500"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all duration-150"
+                  className="w-full bg-strava hover:bg-orange-600 active:scale-95 transition-all duration-150"
                 >
                   Submit
                 </Button>
@@ -199,19 +199,19 @@ export default function TrainingLogPage() {
           </Card>
         )}
 
-        <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <Card className="bg-strava-grey rounded-lg shadow-sm border border-none">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Training History</CardTitle>
+            <CardTitle className="text-md font-semibold text-white">Training History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {trainingLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-2xl text-white">
+                <div key={log.id} className="flex items-center justify-between p-4 bg-strava-darkgrey rounded-lg text-white">
                   <div className="flex items-center gap-3">
                     {log.status === "completed" ? (
                       <CheckCircle className="h-6 w-6 text-green-400" />
                     ) : (
-                      <XCircle className="h-6 w-6 text-red-400" />
+                      <XCircle className="h-6 w-6 text-strava" />
                     )}
                     <div>
                       <p className="font-medium">{log.training_type}</p>
@@ -225,7 +225,7 @@ export default function TrainingLogPage() {
                       href={log.strava_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-orange-500 text-sm hover:underline"
+                      className="text-strava text-sm hover:underline"
                     >
                       View on Strava
                     </a>

@@ -88,10 +88,10 @@ export default function DashboardPage() {
 
         {/* Clickable Stats Cards */}
         <div className="grid grid-cols-2 gap-2 items-stretch">
-          <Link href="/training-log">
+          <Link href="/training-log" className="h-full">
             <Card className="bg-strava-darkgrey text-white border-0 rounded-lg cursor-pointer hover:bg-strava-grey transition-colors">
-              <CardContent className="p-4">
-                <div className="flex flex-col items-start">
+              <CardContent className="p-4 flex-col h-full">
+                <div className="flex flex-col items-start h-full">
                   <Activity className="h-8 w-8 text-strava mb-2" />
                   <p className="text-4xl md:text-4xl font-bold text-strava">{stats.totalWorkouts}</p>
                   <p className="text-white font-semibold text-sm md:text-base">Total Workout</p>
@@ -101,10 +101,10 @@ export default function DashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/training-agenda">
+          <Link href="/training-agenda" className="h-full">
             <Card className="bg-strava-darkgrey text-white border-0 rounded-lg cursor-pointer hover:bg-strava-grey transition-colors">
-              <CardContent className="p-4">
-                <div className="flex flex-col items-start">
+              <CardContent className="p-4 flex-col h-full">
+                <div className="flex flex-col items-start h-full">
                   <Target className="h-8 w-8 text-strava mb-2" />
                   <p className="text-4xl md:text-4xl font-bold text-strava">{stats.weeklyTraining}</p>
                   <p className="text-white font-semibold text-sm md:text-base">Weekly Training</p>

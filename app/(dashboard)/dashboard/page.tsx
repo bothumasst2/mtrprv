@@ -102,7 +102,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/training-agenda">
-            <Card className="bg-strava-darkgrey text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
+            <Card className="bg-strava-darkgrey text-white border-0 rounded-lg cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
                   <Target className="h-8 w-8 text-strava mb-2" />
@@ -118,8 +118,8 @@ export default function DashboardPage() {
         {/* Upload Button */}
         <div className="py-1">
           <Link href="/training-log">
-            <button className="font-bold w-full bg-strava hover:bg-strava-white active:bg-orange-700 text-white py-6 text-lg rounded-lg border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center">
-              <Plus className="h-6 w-6 mr-2" />
+            <button className="font-bold w-full bg-strava hover:bg-strava-white active:bg-orange-700 text-white py-4 text-lg rounded-lg border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center">
+              <Plus className="h-5 w-5 mr-1" />
               UPLOAD TRAINING
             </button>
           </Link>

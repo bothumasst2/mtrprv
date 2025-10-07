@@ -94,7 +94,7 @@ export default function RankingPage() {
       case 2:
         return "bg-gradient-to-r from-gray-300 to-gray-500"
       case 3:
-        return "bg-gradient-to-r from-amber-600 to-amber-700"
+        return "bg-gradient-to-r from-amber-800 to-amber-700"
       default:
         return "bg-gray-800"
     }
@@ -115,19 +115,19 @@ export default function RankingPage() {
     <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-strava">Ranking</h1>
-          <p className="text-sm text-gray-600 mt-1">All-time ranking based on total accumulated distance</p>
+          <h1 className="text-xl md:text-3xl font-bold text-strava">Ranking</h1>
+          <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance</p>
         </div>
 
         <Card className="bg-strava-grey rounded-md shadow-sm border border-none py-2">
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {rankings.map((user) => (
                 <div
                   key={user.id}
-                  className={`flex items-center justify-between p-4 rounded-2xl text-white ${getRankColor(user.rank)}`}
+                  className={`flex items-center justify-between p-4 rounded-lg text-white ${getRankColor(user.rank)}`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
                     <div className="flex items-center justify-center w-10 h-10">{getRankIcon(user.rank)}</div>
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={getSafeSrc(user.profile_photo) || "/placeholder.svg"} />
@@ -136,12 +136,12 @@ export default function RankingPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">{user.username}</p>
+                      <p className="font-semibold text-sm-mobile">{user.username}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold">{user.total_distance.toFixed(1)}</p>
-                    <p className="text-sm opacity-90">km</p>
+                    <p className="text-xs opacity-90">km</p>
                   </div>
                 </div>
               ))}

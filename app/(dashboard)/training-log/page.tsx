@@ -214,8 +214,8 @@ export default function TrainingLogPage() {
                       <XCircle className="h-6 w-6 text-strava" />
                     )}
                     <div>
-                      <p className="font-medium">{log.training_type}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="font-roboto-bold text-sm-mobile">{log.training_type}</p>
+                      <p className="text-xs text-gray-400">
                         {log.distance}km • {new Date(log.date).toLocaleDateString()}
                       </p>
                     </div>
@@ -225,9 +225,9 @@ export default function TrainingLogPage() {
                       href={log.strava_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-strava text-sm hover:underline"
+                      className="text-strava text-xs font-roboto-normal hover:font-roboto-bold hover:underline"
                     >
-                      View on Strava
+                      See More
                     </a>
                   )}
                 </div>

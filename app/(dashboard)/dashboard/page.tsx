@@ -1,83 +1,100 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { TrainingCalendar } from "@/components/training-calendar"
-import { Card, CardContent } from "@/components/ui/card"
-import { Plus, CheckCircle, XCircle, Activity, Target, ChevronRight } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { useAuth } from "@/contexts/auth-context"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { TrainingCalendar } from "@/components/training-calendar";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Plus,
+  CheckCircle,
+  XCircle,
+  Activity,
+  Target,
+  ChevronRight,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/auth-context";
+import Link from "next/link";
 
 interface TrainingStats {
-  totalWorkouts: number
-  weeklyTraining: number
+  totalWorkouts: number;
+  weeklyTraining: number;
 }
 
 interface TrainingTask {
-  id: string
-  training_type: string
-  status: "completed" | "pending" | "missed"
-  date: string
+  id: string;
+  training_type: string;
+  status: "completed" | "pending" | "missed";
+  date: string;
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<TrainingStats>({ totalWorkouts: 0, weeklyTraining: 0 })
-  const [recentTasks, setRecentTasks] = useState<TrainingTask[]>([])
-  const { user } = useAuth()
+  const [stats, setStats] = useState<TrainingStats>({
+    totalWorkouts: 0,
+    weeklyTraining: 0,
+  });
+  const [recentTasks, setRecentTasks] = useState<TrainingTask[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
-      fetchStats()
-      fetchRecentTasks()
+      fetchStats();
+      fetchRecentTasks();
     }
 
     // Listen for training completion events
     const handleTrainingCompleted = () => {
-      fetchStats()
-    }
+      fetchStats();
+    };
 
-    window.addEventListener("trainingCompleted", handleTrainingCompleted)
-    return () => window.removeEventListener("trainingCompleted", handleTrainingCompleted)
-  }, [user])
+    window.addEventListener("trainingCompleted", handleTrainingCompleted);
+    return () =>
+      window.removeEventListener("trainingCompleted", handleTrainingCompleted);
+  }, [user]);
 
   const fetchStats = async () => {
-    if (!user) return
+    if (!user) return;
 
     // Get total completed workouts this month
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0]
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    )
+      .toISOString()
+      .split("T")[0];
 
     const { data: totalData } = await supabase
       .from("training_log")
       .select("id")
       .eq("user_id", user.id)
       .eq("status", "completed")
-      .gte("date", startOfMonth)
+      .gte("date", startOfMonth);
 
     // Get pending training assignments (weekly training count)
     const { data: weeklyData } = await supabase
       .from("training_assignments")
       .select("id")
       .eq("user_id", user.id)
-      .eq("status", "pending")
+      .eq("status", "pending");
 
     setStats({
       totalWorkouts: totalData?.length || 0,
       weeklyTraining: weeklyData?.length || 0,
-    })
-  }
+    });
+  };
 
   const fetchRecentTasks = async () => {
-    if (!user) return
+    if (!user) return;
 
     const { data } = await supabase
       .from("training_log")
       .select("id, training_type, status, date")
       .eq("user_id", user.id)
       .order("date", { ascending: false })
-      .limit(4)
+      .limit(4);
 
-    setRecentTasks(data || [])
-  }
+    setRecentTasks(data || []);
+  };
 
   return (
     <div className="min-h-screen bg-strava-dark">
@@ -93,9 +110,15 @@ export default function DashboardPage() {
               <CardContent className="p-4 flex-col h-full">
                 <div className="flex flex-col items-start h-full">
                   <Activity className="h-8 w-8 text-strava mb-2" />
-                  <p className="text-4xl md:text-4xl font-bold text-strava">{stats.totalWorkouts}</p>
-                  <p className="text-white font-roboto-bold text-mobile-base md:text-base">Total Workout</p>
-                  <p className="text-gray-400 text-mobile-xs font-roboto-normal">Accumulation of activities</p>
+                  <p className="text-4xl md:text-4xl font-bold text-strava">
+                    {stats.totalWorkouts}
+                  </p>
+                  <p className="text-white font-roboto-bold text-mobile-base md:text-base">
+                    Total Workout
+                  </p>
+                  <p className="text-gray-400 text-mobile-xs font-roboto-normal">
+                    Accumulation of activities
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -106,9 +129,15 @@ export default function DashboardPage() {
               <CardContent className="p-4 flex-col h-full">
                 <div className="flex flex-col items-start h-full">
                   <Target className="h-8 w-8 text-strava mb-2" />
-                  <p className="text-4xl md:text-4xl font-bold text-strava">{stats.weeklyTraining}</p>
-                  <p className="text-white font-roboto-bold text-mobile-base md:text-base">Weekly Training</p>
-                  <p className="text-gray-400 text-mobile-xs font-roboto-normal">Your Training Task</p>
+                  <p className="text-4xl md:text-4xl font-bold text-strava">
+                    {stats.weeklyTraining}
+                  </p>
+                  <p className="text-white font-roboto-bold text-mobile-base md:text-base">
+                    Weekly Training
+                  </p>
+                  <p className="text-gray-400 text-mobile-xs font-roboto-normal">
+                    Your Training Task
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -118,8 +147,21 @@ export default function DashboardPage() {
         {/* Upload Button */}
         <div className="py-1">
           <Link href="/training-log">
-            <button className="font-bold w-full bg-strava hover:bg-strava-white active:bg-orange-700 text-white py-4 text-lg rounded-lg border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center">
-              <Plus className="h-5 w-5 mr-1" />
+            <button className="font-bold w-full bg-strava hover:bg-strava-white hover:text-strava active:bg-orange-700 text-white py-4 text-lg rounded-lg border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-x-2">
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-8"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
               UPLOAD TRAINING
             </button>
           </Link>
@@ -127,26 +169,33 @@ export default function DashboardPage() {
 
         {/* Training Tasks */}
         <div className="bg-strava-darkgrey rounded-lg p-4">
-          <h3 className="text-mobile-sm font-roboto-bold text-strava mb-4">Training Task</h3>
+          <h3 className="text-mobile-sm font-roboto-bold text-strava mb-4">
+            Training Task
+          </h3>
           <div className="space-y-3">
             {recentTasks.map((task) => (
-              <div key={task.id} className="bg-strava-grey rounded-lg p-4 text-white">
+              <div
+                key={task.id}
+                className="bg-strava-grey rounded-lg p-4 text-white"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {task.status === "completed" ? (
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 text-white" />
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <CheckCircle className="h-4 w-4 text-white" />
                       </div>
                     ) : (
                       <div className="w-8 h-8 bg-strava rounded-full flex items-center justify-center">
                         <XCircle className="h-5 w-5 text-white" />
                       </div>
                     )}
-                    <span className="font-roboto-bold text-mobile-base md:text-base">{task.training_type}</span>
+                    <span className="font-roboto-bold text-mobile-sm md:text-base">
+                      {task.training_type}
+                    </span>
                   </div>
                   <Link
                     href="/training-log"
-                    className="flex items-center gap-1 text-strava text-sm hover:text-strava transition-colors"
+                    className="flex items-center gap-1 text-strava text-xs hover:font-roboto-bold transition-colors"
                   >
                     See More
                     <ChevronRight className="h-4 w-4" />
@@ -158,5 +207,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

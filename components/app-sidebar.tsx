@@ -96,7 +96,7 @@ function AppBottomNavbar() {
                 
                 {/* Tooltip */}
                 <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                  <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap">
+                  <div className="bg-gray-900 text-white text-mobile-xs font-roboto-normal px-2 py-1 rounded-lg whitespace-nowrap">
                     {item.title}
                   </div>
                 </div>
@@ -120,7 +120,7 @@ function AppBottomNavbar() {
             
             {/* Tooltip */}
             <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap">
+              <div className="bg-gray-900 text-white text-mobile-xs font-roboto-normal px-2 py-1 rounded-lg whitespace-nowrap">
                 Sign Out
               </div>
             </div>

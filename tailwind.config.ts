@@ -12,6 +12,25 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			'roboto': ['Roboto', 'sans-serif'],
+  			'roboto-normal': ['Roboto', 'sans-serif'],
+  			'roboto-bold': ['Roboto', 'sans-serif']
+  		},
+  		fontWeight: {
+  			'roboto-normal': '400',
+  			'roboto-bold': '700'
+  		},
+  		fontSize: {
+  			'xs-mobile': ['0.75rem', { lineHeight: '1rem' }],     // 12px - very small text
+  			'sm-mobile': ['0.875rem', { lineHeight: '1.25rem' }], // 14px - small text
+  			'base-mobile': ['1rem', { lineHeight: '1.5rem' }],    // 16px - body text
+  			'lg-mobile': ['1.125rem', { lineHeight: '1.75rem' }], // 18px - large text
+  			'xl-mobile': ['1.25rem', { lineHeight: '1.75rem' }],  // 20px - h3
+  			'2xl-mobile': ['1.5rem', { lineHeight: '2rem' }],     // 24px - h2
+  			'3xl-mobile': ['1.875rem', { lineHeight: '2.25rem' }], // 30px - h1
+  			'4xl-mobile': ['2.25rem', { lineHeight: '2.5rem' }],  // 36px - hero
+  		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

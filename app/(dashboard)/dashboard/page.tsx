@@ -94,8 +94,8 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-start h-full">
                   <Activity className="h-8 w-8 text-strava mb-2" />
                   <p className="text-4xl md:text-4xl font-bold text-strava">{stats.totalWorkouts}</p>
-                  <p className="text-white font-semibold text-sm md:text-base">Total Workout</p>
-                  <p className="text-gray-400 text-xs">Accumulation of your activities</p>
+                  <p className="text-white font-roboto-bold text-mobile-base md:text-base">Total Workout</p>
+                  <p className="text-gray-400 text-mobile-xs font-roboto-normal">Accumulation of activities</p>
                 </div>
               </CardContent>
             </Card>
@@ -107,8 +107,8 @@ export default function DashboardPage() {
                 <div className="flex flex-col items-start h-full">
                   <Target className="h-8 w-8 text-strava mb-2" />
                   <p className="text-4xl md:text-4xl font-bold text-strava">{stats.weeklyTraining}</p>
-                  <p className="text-white font-semibold text-sm md:text-base">Weekly Training</p>
-                  <p className="text-gray-400 text-xs">Your Training Task</p>
+                  <p className="text-white font-roboto-bold text-mobile-base md:text-base">Weekly Training</p>
+                  <p className="text-gray-400 text-mobile-xs font-roboto-normal">Your Training Task</p>
                 </div>
               </CardContent>
             </Card>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
 
         {/* Training Tasks */}
         <div className="bg-strava-darkgrey rounded-lg p-4">
-          <h3 className="text-sm font-medium text-strava mb-4">Training Task</h3>
+          <h3 className="text-mobile-sm font-roboto-bold text-strava mb-4">Training Task</h3>
           <div className="space-y-3">
             {recentTasks.map((task) => (
               <div key={task.id} className="bg-strava-grey rounded-lg p-4 text-white">
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                         <XCircle className="h-5 w-5 text-white" />
                       </div>
                     )}
-                    <span className="font-medium text-sm md:text-base">{task.training_type}</span>
+                    <span className="font-roboto-bold text-mobile-base md:text-base">{task.training_type}</span>
                   </div>
                   <Link
                     href="/training-log"

@@ -40,14 +40,19 @@ function HeaderContent() {
 
 export default function DashboardLayout({
   children,
+  hideSidebar = false,
 }: {
   children: React.ReactNode
+  hideSidebar?: boolean
 }) {
   const { user, loading } = useAuth()
   const [userRole, setUserRole] = useState<string | null>(null)
   const [roleLoading, setRoleLoading] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
+
+  // Hide sidebar for training menu page
+  const shouldHideSidebar = pathname === '/coach/training-menu'
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -122,8 +127,8 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50/30">
       <HeaderContent />
-      <main className="pb-20">{children}</main>
-      <AppSidebar />
+      <main className={shouldHideSidebar ? "" : "pb-20"}>{children}</main>
+      {!shouldHideSidebar && <AppSidebar />}
     </div>
   )
 }

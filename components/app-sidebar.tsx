@@ -12,6 +12,15 @@ export function AppSidebar() {
   return <AppBottomNavbar />
 }
 
+interface AppSidebarWithVisibilityProps {
+  visible?: boolean
+}
+
+export function AppSidebarWithVisibility({ visible = false }: AppSidebarWithVisibilityProps) {
+  if (!visible) return null
+  return <AppBottomNavbar />
+}
+
 function AppBottomNavbar() {
   const pathname = usePathname()
   const { signOut } = useAuth()

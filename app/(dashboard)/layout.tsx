@@ -52,7 +52,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
 
   const pathsWithoutSidebar = ["/coach/training-menu", "/coach/active-assignments"]
-  const shouldHideSidebar = pathsWithoutSidebar.includes(pathname)
+  const shouldHideSidebar = pathsWithoutSidebar.some((path) => pathname.startsWith(path))
 
   // Redirect to login if not authenticated
   useEffect(() => {

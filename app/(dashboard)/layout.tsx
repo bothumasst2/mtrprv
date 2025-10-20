@@ -51,8 +51,8 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
 
-  // Hide sidebar for training menu page
-  const shouldHideSidebar = pathname === '/coach/training-menu'
+  const pathsWithoutSidebar = ["/coach/training-menu", "/coach/active-assignments"]
+  const shouldHideSidebar = pathsWithoutSidebar.includes(pathname)
 
   // Redirect to login if not authenticated
   useEffect(() => {

@@ -30,6 +30,7 @@ const TRAINING_TYPES = [
   "Strenght session / Running Drills",
   "FARTLEK RUN ( SPEED )",
   "INTERVAL RUN ( SPEED )",
+  "RACE",
 ]
 
 // Custom Bottom Navbar Component for Training Menu

@@ -5,6 +5,18 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
+import Image from "next/image";
+
+// Running Shoe Icon SVG Component
+const ShoeIcon = ({ className = "" }: { className?: string }) => (
+  <Image
+    src="/runicon.svg"
+    width={30}
+    height={30}
+    className={className}
+    alt="run icon"
+  />
+)
 
 interface CalendarProps {
   onDateSelect?: (date: string) => void
@@ -78,7 +90,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
 
     const dataMap = new Map<string, TrainingData>()
 
-    // Mark completed training (green indicators) - use exact date
+    // Mark completed training - use exact date
     logs?.forEach((log) => {
       if (log.status === "completed") {
         const existing = dataMap.get(log.date) || {
@@ -92,7 +104,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       }
     })
 
-    // Mark agenda training (blue for pending, red for missed) - use exact target_date
+    // Mark agenda training - use exact target_date (but we won't display them)
     assignments?.forEach((assignment) => {
       const existing = dataMap.get(assignment.target_date) || {
         date: assignment.target_date,
@@ -102,9 +114,9 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       }
 
       if (assignment.status === "pending") {
-        existing.hasPendingAgenda = true // Blue for pending
+        existing.hasPendingAgenda = true
       } else if (assignment.status === "missed") {
-        existing.hasOverdueAgenda = true // Red for missed
+        existing.hasOverdueAgenda = true
       }
       dataMap.set(assignment.target_date, existing)
     })
@@ -129,7 +141,7 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       days.push({
         day: prevDate.getDate(),
         isCurrentMonth: false,
-        dayOfWeek: prevDate.getDay(), // This will be the actual day of week (0=Sunday, 6=Saturday)
+        dayOfWeek: prevDate.getDay(),
       })
     }
 
@@ -139,35 +151,22 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
       days.push({
         day,
         isCurrentMonth: true,
-        dayOfWeek: currentDate.getDay(), // This will be the actual day of week (0=Sunday, 6=Saturday)
+        dayOfWeek: currentDate.getDay(),
       })
     }
 
     return days
   }
 
-  const getTrainingIndicator = (day: number, isCurrentMonth: boolean) => {
-    if (!isCurrentMonth) return null
+  // Check if a date has completed training - only show shoe icon for completed
+  const hasCompletedTraining = (day: number, isCurrentMonth: boolean): boolean => {
+    if (!isCurrentMonth) return false
 
-    // Create date string in local timezone to match database dates exactly
     const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-    .toLocaleDateString("sv-SE") // Format: YYYY-MM-DD tanpa UTC offset
+      .toLocaleDateString("sv-SE")
     const data = trainingData.find((d) => d.date === dateStr)
 
-    if (!data) return null
-
-    if (data.hasCompleted) {
-      // Green indicator for completed training
-      return <div className="w-2 h-0.5 bg-green-500 rounded-full mx-auto mt-0.5" />
-    } else if (data.hasOverdueAgenda) {
-      // Red indicator for missed agenda
-      return <div className="w-2 h-0.5 bg-red-500 rounded-full mx-auto mt-0.5" />
-    } else if (data.hasPendingAgenda) {
-      // Blue indicator for pending agenda
-      return <div className="w-2 h-0.5 bg-blue-500 rounded-full mx-auto mt-0.5" />
-    }
-
-    return null
+    return data?.hasCompleted ?? false
   }
 
   const navigateMonth = (direction: "prev" | "next") => {
@@ -186,66 +185,81 @@ export function TrainingCalendar({ onDateSelect }: CalendarProps) {
   const today = new Date()
   const isCurrentMonth =
     currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear()
+  const isToday = (day: number, isCurrentMonthDay: boolean) =>
+    isCurrentMonthDay && day === today.getDate() && isCurrentMonth
 
   return (
-    <div className="bg-strava-grey rounded-lg p-2 shadow-sm border border-none">
-      <div className="flex items-center justify-between mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigateMonth("prev")}
-          className="p- hover:bg-strava-darkgrey active:scale-95 transition-all duration-150"
-        >
-          <ChevronLeft className="h-6 w-6 text-strava" />
-        </Button>
-        <h3 className="font-semibold text-base text-strava">
+    <div className="bg-[#1c1c1c] rounded-xl p-5">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-white">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigateMonth("next")}
-          className="p-2 hover:bg-strava-darkgrey active:scale-95 transition-all duration-150"
-        >
-          <ChevronRight className="h-6 w-6 text-strava" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateMonth("prev")}
+            className="p-2 hover:bg-[#2a2a2a] rounded-full"
+          >
+            <ChevronLeft className="h-5 w-5 text-gray-400" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateMonth("next")}
+            className="p-2 hover:bg-[#2a2a2a] rounded-full"
+          >
+            <ChevronRight className="h-5 w-5 text-gray-400" />
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <div key={day} className="text-center text-xs font-medium text-white py-1">
+      {/* Day names - Single letters */}
+      <div className="grid grid-cols-7 gap-1 mb-3">
+        {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+          <div key={index} className="text-center text-sm font-medium text-gray-400 py-2">
             {day}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((dayInfo, index) => (
-          <div key={index} className="aspect-square">
-            <button
-              className={`w-full h-full flex flex-col items-center justify-center text-sm md:text-sm rounded-lg hover:bg-strava-darkgrey transition-colors ${
-                dayInfo.isCurrentMonth && dayInfo.day === today.getDate() && isCurrentMonth
-                  ? "bg-strava text-white"
-                  : dayInfo.isCurrentMonth
-                    ? dayInfo.dayOfWeek === 0 // 0 = Sunday, should be red
-                      ? "text-strava font-semibold"
-                      : "text-white"
-                    : "text-strava-white"
-              }`}
-              onClick={() => {
-                if (dayInfo.isCurrentMonth) {
-                  const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayInfo.day)
-                    .toISOString()
-                    .split("T")[0]
-                  onDateSelect?.(dateStr)
-                }
-              }}
-            >
-              <span>{dayInfo.day}</span>
-              {getTrainingIndicator(dayInfo.day, dayInfo.isCurrentMonth)}
-            </button>
-          </div>
-        ))}
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((dayInfo, index) => {
+          const completed = hasCompletedTraining(dayInfo.day, dayInfo.isCurrentMonth)
+          const isTodayDate = isToday(dayInfo.day, dayInfo.isCurrentMonth)
+
+          return (
+            <div key={index} className="aspect-square p-0.5">
+              <button
+                className={`w-full h-full flex items-center justify-center rounded-full transition-colors relative
+                  ${!dayInfo.isCurrentMonth
+                    ? "text-gray-600"
+                    : isTodayDate
+                      ? "bg-white text-black font-semibold"
+                      : completed
+                        ? "bg-white text-black"
+                        : "text-gray-300 border border-gray-600 hover:bg-[#2a2a2a]"
+                  }`}
+                onClick={() => {
+                  if (dayInfo.isCurrentMonth) {
+                    const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayInfo.day)
+                      .toISOString()
+                      .split("T")[0]
+                    onDateSelect?.(dateStr)
+                  }
+                }}
+              >
+                {completed ? (
+                  <ShoeIcon className="w-8 h-8" />
+                ) : (
+                  <span className="text-sm">{dayInfo.day}</span>
+                )}
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

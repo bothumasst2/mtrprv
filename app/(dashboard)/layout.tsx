@@ -16,23 +16,81 @@ function getSafeSrc(src: string | null | undefined) {
 }
 
 function HeaderContent() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const { profilePhoto } = useProfile()
+  const [showMenu, setShowMenu] = useState(false)
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.replace("/login")
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
+  }
 
   return (
-    <header className="sticky top-0 z-40 bg-white/40 backdrop-blur border-b border-none px-4 py-3">
+    <header className="sticky top-0 z-40 bg-strava-darkgrey backdrop-blur border-b border-none px-4 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MTRLogo className="fill-black h-12 w-26" />
+          <MTRLogo className="fill-white h-16 w-28" />
         </div>
-        <Link href="/profile">
-          <Avatar className="h-12 w-12 border-2 border-orange-500 cursor-pointer hover:border-orange-600 transition-colors">
-            <AvatarImage src={getSafeSrc(profilePhoto) || "/placeholder.svg"} />
-            <AvatarFallback className="bg-orange-500 text-white">
-              {(user?.email?.[0] || "U").toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
+
+        {/* Avatar with popup menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="focus:outline-none"
+          >
+            <Avatar className="h-12 w-12 border-2 border-orange-500 cursor-pointer hover:border-orange-600 transition-colors">
+              <AvatarImage src={getSafeSrc(profilePhoto) || "/placeholder.svg"} />
+              <AvatarFallback className="bg-orange-500 text-white">
+                {(user?.email?.[0] || "U").toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+
+          {/* Popup Menu */}
+          {showMenu && (
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowMenu(false)}
+              />
+
+              {/* Menu dropdown */}
+              <div className="absolute right-0 top-14 z-50 w-48 bg-[#2a2a2a] rounded-lg shadow-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <Link
+                  href="/profile"
+                  onClick={() => setShowMenu(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#3a3a3a] transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span className="text-sm">Profile</span>
+                </Link>
+
+                <div className="border-t border-gray-700" />
+
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-strava hover:bg-[#3a3a3a] transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span className="text-sm">Logout</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   )

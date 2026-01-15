@@ -196,7 +196,7 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-6 space-y-6">
         <h1 className="text-2xl md:text-3xl font-bold text-strava">Profile</h1>
 
-        <Card className="bg-strava-darkgrey rounded-lg shadow-sm border border-none relative">
+        <Card className="bg-[#1f1f1f] rounded-lg shadow-sm border border-none relative">
           <Button
             variant="ghost"
             size="md"
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                     onChange={(e) => setProfile((prev) => ({ ...prev, strava_link: e.target.value }))}
                     disabled={!isEditing}
                     placeholder="https://strava.com/athletes/..."
-                    className="text-black font-bold focus:border-orange-500 focus:ring-orange-500"
+                    className="text-sm font-md focus:border-orange-500 focus:ring-orange-500"
                   />
                 )}
               </div>
@@ -286,14 +286,14 @@ export default function ProfilePage() {
 
         <Card className="bg-strava-darkgrey rounded-lg shadow-sm border border-none">
           <CardHeader>
-            <CardTitle className="text-md font-normal text-white">Training History</CardTitle>
+            <CardTitle className="text-sm font-normal text-white">Training History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {trainingHistory.map((training) => (
                 <div
                   key={training.id}
-                  className="flex items-center justify-between p-4 bg-strava rounded-lg text-white"
+                  className="flex items-center justify-between p-4 bg-[#1f1f1f] rounded-lg text-white"
                 >
                   <div className="flex items-center gap-4">
                     {training.status === "completed" ? (

@@ -1,6 +1,7 @@
 import type React from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { ProfileProvider } from "@/contexts/profile-context"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <ProfileProvider>{children}</ProfileProvider>
         </AuthProvider>
+        <Toaster />
       </body>
     </html>
   )

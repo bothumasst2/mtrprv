@@ -136,7 +136,7 @@ export default function DashboardPage() {
                     Weekly Training
                   </p>
                   <p className="text-gray-400 text-mobile-xs font-roboto-normal">
-                    Your Training Task
+                    Your Training Menu
                   </p>
                 </div>
               </CardContent>
@@ -145,23 +145,23 @@ export default function DashboardPage() {
         </div>
 
         {/* Upload Button */}
-        <div className="py-1">
+        <div className="py-0">
           <Link href="/training-log">
             <button className="font-bold w-full bg-strava hover:bg-strava-white hover:text-strava active:bg-orange-700 text-white py-4 text-lg rounded-lg border-0 shadow-lg hover:shadow-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-x-2">
               <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="size-8"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  />
-                </svg>
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
               UPLOAD TRAINING
             </button>
           </Link>
@@ -169,8 +169,8 @@ export default function DashboardPage() {
 
         {/* Training Tasks */}
         <div className="bg-strava-darkgrey rounded-lg p-4">
-          <h3 className="text-mobile-sm font-roboto-bold text-strava mb-4">
-            Training Task
+          <h3 className="text-mobile-xs font-roboto-bold text-white mb-2">
+            Your Activities
           </h3>
           <div className="space-y-3">
             {recentTasks.map((task) => (
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {task.status === "completed" ? (
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-6 bg-strava rounded-full flex items-center justify-center">
                         <CheckCircle className="h-4 w-4 text-white" />
                       </div>
                     ) : (
@@ -195,7 +195,7 @@ export default function DashboardPage() {
                   </div>
                   <Link
                     href="/training-log"
-                    className="flex items-center gap-1 text-strava text-xs hover:font-roboto-bold transition-colors"
+                    className="flex items-center gap-1 text-white text-[10px] hover:font-roboto-bold transition-colors"
                   >
                     See More
                     <ChevronRight className="h-4 w-4" />

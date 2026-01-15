@@ -131,9 +131,9 @@ export default function TrainingAgendaPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Loading training agenda...</div>
+          <div className="text-center py-8 text-strava">Loading training agenda...</div>
         ) : assignments.length === 0 ? (
-          <Card className="bg-strava-grey rounded-lg shadow-sm border border-none">
+          <Card className="bg-[#1f1f1f] rounded-md shadow-sm border border-none">
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
@@ -149,9 +149,9 @@ export default function TrainingAgendaPage() {
             {assignments.map((assignment) => (
               <Card
                 key={assignment.id}
-                className="bg-strava-darkgrey rounded-2xl shadow-sm border border-none"
+                className="bg-[#1f1f1f] rounded-md shadow-sm border border-none"
               >
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-6">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
                       {getStatusIcon(assignment.status)}
@@ -167,15 +167,15 @@ export default function TrainingAgendaPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-white text-sm">Target Date</p>
+                      <p className="text-white text-[11px]">Target Date</p>
                       <p className="text-strava font-bold">
                         {new Date(assignment.target_date).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
-                      <p className="text-white text-sm">Assigned Date</p>
+                      <p className="text-white text-[11px]">Assigned Date</p>
                       <p className="text-strava font-bold">
                         {new Date(assignment.assigned_date).toLocaleDateString()}
                       </p>
@@ -183,23 +183,21 @@ export default function TrainingAgendaPage() {
                   </div>
 
                   {assignment.training_details && (
-                      <div className="flex items-center gap-2">
-                      <p className="text-sm text-gray-800 bg-strava-grey p-3 rounded-sm whitespace-pre-wrap break-words">
-                      {assignment.training_details}
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-white bg-strava-darkgrey p-4 rounded-sm whitespace-pre-wrap break-words">
+                        {assignment.training_details}
                       </p>
                     </div>
                   )}
 
                   {(assignment.status === "pending" ||
                     assignment.status === "missed") && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-blue-800 text-sm">
-                        <strong>Note:</strong> This training will be
-                        automatically marked as completed when you upload the
-                        corresponding training in your Training Log.
-                      </p>
-                    </div>
-                  )}
+                      <div className="bg-[#1f1f1f] border border-strava-darkgrey rounded-sm p-2 mt-2">
+                        <p className="text-gray-600 text-xs">
+                          <strong>Note:</strong> Training ini akan otomatis Completed saat submit setorun
+                        </p>
+                      </div>
+                    )}
                 </CardContent>
               </Card>
             ))}

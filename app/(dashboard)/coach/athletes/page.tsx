@@ -4,8 +4,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Users, Activity, ArrowLeft } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Users, Activity, ArrowLeft, Trash2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
 
 function getSafeSrc(src: string | null | undefined) {
   return src && src.trim().length > 0 ? src : undefined
@@ -35,6 +38,10 @@ export default function AthletesPage() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null)
   const [athleteActivities, setAthleteActivities] = useState<AthleteActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
+  const [selectedAthletes, setSelectedAthletes] = useState<Set<string>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchAthletes()
@@ -66,7 +73,7 @@ export default function AthletesPage() {
           const allDates: string[] = []
           if (completedWorkouts) allDates.push(...completedWorkouts.map(w => w.date))
           if (assignedWorkouts) allDates.push(...assignedWorkouts.map(w => w.target_date || w.date))
-          
+
           allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
           const lastActivity = allDates.length > 0 ? allDates[0] : null
 
@@ -123,12 +130,12 @@ export default function AthletesPage() {
           if (completed.assignment_id && completed.assignment_id === activity.id) {
             return true
           }
-          
+
           // Method 2: Cocokkan berdasarkan tanggal, tipe latihan, dan user
           const completedDate = new Date(completed.date).toDateString()
           const assignmentDate = new Date(activity.target_date || activity.date).toDateString()
-          
-          return completedDate === assignmentDate && 
+
+          return completedDate === assignmentDate &&
                  completed.training_type === activity.training_type &&
                  completed.user_id === activity.user_id
         })
@@ -137,11 +144,11 @@ export default function AthletesPage() {
         if (!isCompleted) {
           const targetDate = new Date(activity.target_date || activity.date)
           const today = new Date()
-          
+
           // Set today to start of day to compare dates accurately
           today.setHours(0, 0, 0, 0)
           targetDate.setHours(0, 0, 0, 0)
-          
+
           // Hanya tampilkan yang pending (belum lewat tanggal), skip yang missed
           if (targetDate >= today) {
             allActivities.push({
@@ -159,12 +166,13 @@ export default function AthletesPage() {
     }
 
     // Sort by date (most recent first)
-    allActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    allActivities.sort((a: AthleteActivity, b: AthleteActivity) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     setAthleteActivities(allActivities)
   }
 
   const handleAthleteClick = (athlete: Athlete) => {
+    if (isDeleteMode) return // Don't allow click-through in delete mode
     setSelectedAthlete(athlete)
     fetchAthleteActivities(athlete.id)
   }
@@ -174,9 +182,75 @@ export default function AthletesPage() {
     setAthleteActivities([])
   }
 
+  const handleDeleteModeToggle = () => {
+    setIsDeleteMode(!isDeleteMode)
+    setSelectedAthletes(new Set()) // Clear selections when toggling mode
+  }
+
+  const handleAthleteSelection = (athleteId: string, checked: boolean) => {
+    const newSelected = new Set(selectedAthletes)
+    if (checked) {
+      newSelected.add(athleteId)
+    } else {
+      newSelected.delete(athleteId)
+    }
+    setSelectedAthletes(newSelected)
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAthletes(new Set(athletes.map(athlete => athlete.id)))
+    } else {
+      setSelectedAthletes(new Set())
+    }
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedAthletes.size === 0) return
+
+    setIsDeleting(true)
+
+    try {
+      const athleteIds = Array.from(selectedAthletes)
+
+      // Delete from all related tables first
+      const deletePromises = [
+        // Delete training logs
+        supabase.from("training_log").delete().in("user_id", athleteIds),
+        // Delete training assignments
+        supabase.from("training_assignments").delete().in("user_id", athleteIds),
+        // Delete users (this will cascade delete related data)
+        supabase.from("users").delete().in("id", athleteIds)
+      ]
+
+      await Promise.all(deletePromises)
+
+      // Remove deleted athletes from local state
+      setAthletes(prev => prev.filter(athlete => !selectedAthletes.has(athlete.id)))
+
+      // Reset state
+      setSelectedAthletes(new Set())
+      setIsDeleteMode(false)
+
+      toast({
+        title: "Users Deleted",
+        description: `Successfully deleted ${athleteIds.length} user(s)`,
+      })
+    } catch (error) {
+      console.error("Error deleting users:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete users. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-strava-dark">
+      <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto px-4 py-6 space-y-6">
           <h1 className="text-2xl md:text-3xl font-bold text-white">Athletes</h1>
           <div className="text-white text-center py-8">Loading athletes...</div>
@@ -187,18 +261,18 @@ export default function AthletesPage() {
 
   if (selectedAthlete) {
     return (
-      <div className="min-h-screen bg-strava-dark">
+      <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <div className="text-strava flex items-center gap-4">
+          <div className="text-orange-500 flex items-center gap-4">
             <Button variant="ghost" onClick={handleBackToList} className="p-2">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-strava">{selectedAthlete.username}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-orange-500">{selectedAthlete.username}</h1>
               <p className="text-white text-sm">Activity History</p>
             </div>
           </div>
-          <Card className="bg-[#303030] rounded-xl shadow-sm border-none">
+          <Card className="bg-gray-800 rounded-xl shadow-sm border-none">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-white">Training Activities</CardTitle>
             </CardHeader>
@@ -260,11 +334,65 @@ export default function AthletesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-strava-dark">
+    <div className="min-h-screen bg-gray-900">
       <div className="container mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-strava">Athletes</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage and view your athletes progress</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-orange-500">Athletes</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage and view your athletes progress</p>
+          </div>
+
+          {/* Delete Mode Controls */}
+          <div className="flex items-center gap-4">
+            {isDeleteMode && (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={athletes.length > 0 && selectedAthletes.size === athletes.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <label htmlFor="select-all" className="text-sm text-white">
+                    Select All ({selectedAthletes.size}/{athletes.length})
+                  </label>
+                </div>
+
+                {selectedAthletes.size > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={isDeleting} className="flex items-center gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        {isDeleting ? "Deleting..." : `Delete Selected (${selectedAthletes.size})`}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete {selectedAthletes.size} user(s)?
+                          This action cannot be undone and will remove all their training data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteSelected} className="bg-red-600 hover:bg-red-700">
+                          Delete Users
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            )}
+
+            <Button
+              variant={isDeleteMode ? "outline" : "default"}
+              onClick={handleDeleteModeToggle}
+              className={isDeleteMode ? "border-white text-white hover:bg-white hover:text-gray-900" : ""}
+            >
+              {isDeleteMode ? "Cancel" : "Delete Users"}
+            </Button>
+          </div>
         </div>
 
         {athletes.length === 0 ? (
@@ -280,23 +408,38 @@ export default function AthletesPage() {
             {athletes.map((athlete) => (
               <Card
                 key={athlete.id}
-                className="bg-strava-darkgrey rounded-xl shadow-sm border border-none cursor-pointer hover:bg-strava hover:shadow-md transition-shadow"
+                className={`bg-gray-800 rounded-xl shadow-sm border border-none transition-all ${
+                  isDeleteMode
+                    ? "cursor-default hover:bg-gray-800"
+                    : "cursor-pointer hover:bg-gray-700 hover:shadow-md"
+                } ${selectedAthletes.has(athlete.id) ? "ring-2 ring-red-500" : ""}`}
                 onClick={() => handleAthleteClick(athlete)}
               >
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-start gap-4">
+                    {isDeleteMode && (
+                      <Checkbox
+                        checked={selectedAthletes.has(athlete.id)}
+                        onCheckedChange={(checked) => handleAthleteSelection(athlete.id, checked as boolean)}
+                        className="mt-1"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    )}
+
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={getSafeSrc(athlete.profile_photo) || "/placeholder.svg"} />
                       <AvatarFallback className="bg-orange-500 text-white">
                         {athlete.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
+
+                    <div className="flex-1">
                       <h3 className="font-semibold text-white">{athlete.username}</h3>
                       <p className="text-sm text-gray-400">{athlete.email}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+
+                  <div className="grid grid-cols-2 gap-4 text-sm mt-4">
                     <div>
                       <p className="text-gray-400">Total Workouts</p>
                       <p className="text-lg font-bold text-white">{athlete.total_workouts}</p>

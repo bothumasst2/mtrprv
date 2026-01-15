@@ -113,7 +113,7 @@ export default function TrainingLogPage() {
     <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-semibold text-white">Training Log</h1>
+          <h1 className="text-md md:text-xl font-semibold text-white">Training Log</h1>
           <Button
             onClick={() => setShowForm(!showForm)}
             className="font-semibold bg-strava hover:bg-strava-white active:bg-orange-700scale-95 transition-all duration-150"
@@ -124,49 +124,52 @@ export default function TrainingLogPage() {
         </div>
 
         {showForm && (
-          <Card className="bg-white rounded-lg shadow-sm border border-gray-100">
+          <Card className="bg-[#2f2f2f] rounded-lg shadow-sm !border-none">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-800">Upload Data Training</CardTitle>
+              <CardTitle className="text-md md:text-md font-semibold text-strava">Upload Data Training</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Tanggal</Label>
+                  <Label htmlFor="date" className="text-white">Tanggal</Label>
                   <Input
                     id="date"
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
                     required
-                    className="focus:border-orange-500 focus:ring-orange-500"
+                    className="text-sm bg-[#2a2a2a] text-white border-gray-600 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="training_type">Menu Training</Label>
-                  <Select
-                    value={formData.training_type}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, training_type: value }))}
-                  >
-                    <SelectTrigger className="focus:border-orange-500 focus:ring-orange-500">
-                      <SelectValue placeholder="Select training type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableTrainingTypes.length > 0 ? (
-                         availableTrainingTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                           {type}
-                          </SelectItem>
-                        ))
-                      ) : (
-                      <div className="text-sm text-gray-400 px-3 py-2">
-                        💤 No training assigned yet by your coach.
-                      </div>
-                    )}         
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="training_type" className="text-white">Menu Training</Label>
+                  {availableTrainingTypes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {availableTrainingTypes.map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, training_type: type }))}
+                          className={`
+                            px-4 py-2 rounded-full text-xs font-sm transition-all duration-200
+                            ${formData.training_type === type
+                              ? 'bg-strava text-white'
+                              : 'bg-transparent border border-gray-500 text-gray-300 hover:border-gray-400'
+                            }
+                          `}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-white px-3 py-2 bg-[#1a1a1a] rounded-lg">
+                      💤 No training assigned yet by your coach.
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="distance">Jarak (km)</Label>
+                  <Label htmlFor="distance" className="text-white">Jarak (km)</Label>
                   <Input
                     id="distance"
                     type="number"
@@ -175,22 +178,22 @@ export default function TrainingLogPage() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, distance: e.target.value }))}
                     placeholder="Contoh: 5.2"
                     required
-                    className="focus:border-orange-500 focus:ring-orange-500"
+                    className="text-sm bg-[#2a2a2a] text-white border-gray-600 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="strava_link">URL</Label>
+                  <Label htmlFor="strava_link" className="text-white">URL</Label>
                   <Input type="url"
                     id="strava_link"
                     value={formData.strava_link}
                     onChange={(e) => setFormData((prev) => ({ ...prev, strava_link: e.target.value }))}
                     placeholder="Hanya URL Jam atau STRAVA"
-                    className="focus:strava focus:ring-orange-500"
+                    className="text-sm bg-[#2a2a2a] text-white border-gray-600 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-strava hover:bg-orange-600 active:scale-95 transition-all duration-150"
+                  className="text-sm w-full bg-strava hover:bg-orange-600 active:scale-95 transition-all duration-150"
                 >
                   Submit
                 </Button>
@@ -199,7 +202,7 @@ export default function TrainingLogPage() {
           </Card>
         )}
 
-        <Card className="bg-strava-grey rounded-lg shadow-sm border border-none">
+        <Card className="bg-[#1f1f1f] rounded-md shadow-sm border border-none">
           <CardHeader>
             <CardTitle className="text-md font-semibold text-white">Training History</CardTitle>
           </CardHeader>

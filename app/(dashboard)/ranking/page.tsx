@@ -27,6 +27,9 @@ export default function RankingPage() {
   }, [])
 
   const fetchRankings = async () => {
+    // User IDs to exclude from ranking
+    const excludedUserIds = ["7f52c19e-c17a-4289-9812-f42aff30374c"]
+
     // Get ALL completed training logs (no date filter for accumulated total)
     const { data } = await supabase
       .from("training_log")
@@ -46,6 +49,10 @@ export default function RankingPage() {
 
       data.forEach((log: any) => {
         const userId = log.user_id
+
+        // Skip excluded users
+        if (excludedUserIds.includes(userId)) return
+
         const existing = userDistances.get(userId)
 
         if (existing) {

@@ -136,8 +136,8 @@ export default function AthletesPage() {
           const assignmentDate = new Date(activity.target_date || activity.date).toDateString()
 
           return completedDate === assignmentDate &&
-                 completed.training_type === activity.training_type &&
-                 completed.user_id === activity.user_id
+            completed.training_type === activity.training_type &&
+            completed.user_id === activity.user_id
         })
 
         // Jika belum dikerjakan, tambahkan sebagai pending (hanya yang belum lewat tanggal)
@@ -250,7 +250,7 @@ export default function AthletesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-[#1f1f1f]">
         <div className="container mx-auto px-4 py-6 space-y-6">
           <h1 className="text-2xl md:text-3xl font-bold text-white">Athletes</h1>
           <div className="text-white text-center py-8">Loading athletes...</div>
@@ -261,7 +261,7 @@ export default function AthletesPage() {
 
   if (selectedAthlete) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-[#1f1f1f]">
         <div className="container mx-auto px-4 py-6 space-y-6">
           <div className="text-orange-500 flex items-center gap-4">
             <Button variant="ghost" onClick={handleBackToList} className="p-2">
@@ -272,14 +272,14 @@ export default function AthletesPage() {
               <p className="text-white text-sm">Activity History</p>
             </div>
           </div>
-          <Card className="bg-gray-800 rounded-xl shadow-sm border-none">
+          <Card className="bg-strava-darkgrey rounded-xl shadow-sm border-none">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-white">Training Activities</CardTitle>
             </CardHeader>
             <CardContent>
               {athleteActivities.length === 0 ? (
                 <div className="text-center py-8">
-                  <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <Activity className="h-12 w-12 text-gray-500 mx-auto mb-4" />
                   <p className="text-gray-600">No training activities found</p>
                 </div>
               ) : (
@@ -288,11 +288,10 @@ export default function AthletesPage() {
                     <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-2xl">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-3 h-3 rounded-full ${
-                            activity.status === "completed"
-                              ? "bg-green-500"
-                              : "bg-blue-500"
-                          }`}
+                          className={`w-3 h-3 rounded-full ${activity.status === "completed"
+                            ? "bg-green-500"
+                            : "bg-blue-500"
+                            }`}
                         />
                         <div>
                           <p className="font-medium text-gray-800">{activity.training_type}</p>
@@ -303,11 +302,10 @@ export default function AthletesPage() {
                       </div>
                       <div className="text-right">
                         <p
-                          className={`text-sm font-medium ${
-                            activity.status === "completed"
-                              ? "text-green-600"
-                              : "text-blue-600"
-                          }`}
+                          className={`text-sm font-medium ${activity.status === "completed"
+                            ? "text-green-600"
+                            : "text-blue-600"
+                            }`}
                         >
                           {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
                         </p>
@@ -334,12 +332,12 @@ export default function AthletesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-[#1f1f1f]">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-orange-500">Athletes</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage and view your athletes progress</p>
+            <p className="text-xs text-white mt-1">Manage and view your athletes progress</p>
           </div>
 
           {/* Delete Mode Controls */}
@@ -388,7 +386,7 @@ export default function AthletesPage() {
             <Button
               variant={isDeleteMode ? "outline" : "default"}
               onClick={handleDeleteModeToggle}
-              className={isDeleteMode ? "border-white text-white hover:bg-white hover:text-gray-900" : ""}
+              className={isDeleteMode ? "border-white text-gray-500 hover:bg-strava hover:text-gray-900" : ""}
             >
               {isDeleteMode ? "Cancel" : "Delete Users"}
             </Button>
@@ -408,11 +406,10 @@ export default function AthletesPage() {
             {athletes.map((athlete) => (
               <Card
                 key={athlete.id}
-                className={`bg-gray-800 rounded-xl shadow-sm border border-none transition-all ${
-                  isDeleteMode
-                    ? "cursor-default hover:bg-gray-800"
-                    : "cursor-pointer hover:bg-gray-700 hover:shadow-md"
-                } ${selectedAthletes.has(athlete.id) ? "ring-2 ring-red-500" : ""}`}
+                className={`bg-strava-darkgrey rounded-xl shadow-sm border border-none transition-all ${isDeleteMode
+                  ? "cursor-default hover:bg-strava"
+                  : "cursor-pointer hover:bg-strava hover:shadow-md"
+                  } ${selectedAthletes.has(athlete.id) ? "ring-2 ring-red-500" : ""}`}
                 onClick={() => handleAthleteClick(athlete)}
               >
                 <CardContent className="p-6">

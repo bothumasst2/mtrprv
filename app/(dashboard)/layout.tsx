@@ -109,7 +109,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
 
-  const pathsWithoutSidebar = ["/coach/training-menu", "/coach/active-assignments"]
+  const pathsWithoutSidebar = ["/coach/active-assignments"]
   const shouldHideSidebar = pathsWithoutSidebar.some((path) => pathname.startsWith(path))
 
   // Redirect to login if not authenticated
@@ -182,10 +182,16 @@ export default function DashboardLayout({
     return null
   }
 
+  // Check if current user is coach/admin for desktop sidebar margin
+  const isCoachOrAdmin = userRole === "coach" || userRole === "admin"
+
   return (
     <div className="min-h-screen bg-gray-50/30">
-      <HeaderContent />
-      <main className={shouldHideSidebar ? "" : "pb-20"}>{children}</main>
+      {/* Add margin on desktop for coach sidebar */}
+      <div className={isCoachOrAdmin ? "md:ml-64" : ""}>
+        <HeaderContent />
+        <main className={shouldHideSidebar ? "" : "pb-20"}>{children}</main>
+      </div>
       {!shouldHideSidebar && <AppSidebar />}
     </div>
   )

@@ -62,7 +62,7 @@ export default function LoginPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-strava px-4">
+    <div className="min-h-screen flex items-center justify-center bg-strava-darkgrey px-4">
       <Card className="w-full bg-strava-dark max-w-md border-none rounded-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-0">
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                className="border-strava text-strava data-[state=checked]:bg-strava data-[state=checked]:border-strava"/>
+                className="border-strava text-strava data-[state=checked]:bg-strava data-[state=checked]:border-strava" />
               <Label htmlFor="remember" className="text-sm">
                 Remember me
               </Label>
@@ -127,9 +127,9 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-         <div className="flex text-xs items-center space-x-2 text-strava-light justify-center pt-4 py-6">
+        <div className="flex text-[9px] items-center space-x-2 text-strava-light justify-center pt-4 py-6">
           © 2025 - App development by elbruz
-         </div>
+        </div>
       </Card>
     </div>
   )

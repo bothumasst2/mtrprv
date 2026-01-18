@@ -1,5 +1,13 @@
 "use client"
 
+function getLocalDateString() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -25,8 +33,9 @@ export default function TrainingLogPage() {
   const [trainingLogs, setTrainingLogs] = useState<TrainingLog[]>([])
   const [availableTrainingTypes, setAvailableTrainingTypes] = useState<string[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: getLocalDateString(),
     training_type: "",
     distance: "",
     strava_link: "",
@@ -74,7 +83,8 @@ export default function TrainingLogPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || isSubmitting) return
+    setIsSubmitting(true)
 
     const { error } = await supabase.from("training_log").insert({
       user_id: user.id,
@@ -95,7 +105,7 @@ export default function TrainingLogPage() {
         .eq("status", "pending")
 
       setFormData({
-        date: new Date().toISOString().split("T")[0],
+        date: getLocalDateString(),
         training_type: "",
         distance: "",
         strava_link: "",
@@ -107,6 +117,7 @@ export default function TrainingLogPage() {
       // Trigger dashboard refresh
       window.dispatchEvent(new CustomEvent("trainingCompleted"))
     }
+    setIsSubmitting(false)
   }
 
   return (
@@ -131,7 +142,7 @@ export default function TrainingLogPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-white">Tanggal</Label>
+                  <Label htmlFor="date" className="text-white">Tanggal :</Label>
                   <Input
                     id="date"
                     type="date"
@@ -142,7 +153,7 @@ export default function TrainingLogPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="training_type" className="text-white">Menu Training</Label>
+                  <Label htmlFor="training_type" className="text-white">Menu Training :</Label>
                   {availableTrainingTypes.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {availableTrainingTypes.map((type) => (
@@ -169,7 +180,7 @@ export default function TrainingLogPage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="distance" className="text-white">Jarak (km)</Label>
+                  <Label htmlFor="distance" className="text-white">Jarak (km) :</Label>
                   <Input
                     id="distance"
                     type="number"
@@ -182,7 +193,7 @@ export default function TrainingLogPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="strava_link" className="text-white">URL</Label>
+                  <Label htmlFor="strava_link" className="text-white">URL :</Label>
                   <Input type="url"
                     id="strava_link"
                     value={formData.strava_link}
@@ -193,9 +204,10 @@ export default function TrainingLogPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="text-sm w-full bg-strava hover:bg-orange-600 active:scale-95 transition-all duration-150"
+                  disabled={!formData.date || !formData.training_type || !formData.distance || !formData.strava_link || isSubmitting}
+                  className="text-sm w-full bg-strava hover:bg-orange-600 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit
+                  {isSubmitting ? "Submitting..." : "Submit"}
                 </Button>
               </form>
             </CardContent>

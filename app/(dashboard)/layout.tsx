@@ -109,7 +109,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
 
-  const pathsWithoutSidebar = ["/coach/active-assignments"]
+  const pathsWithoutSidebar: string[] = []
   const shouldHideSidebar = pathsWithoutSidebar.some((path) => pathname.startsWith(path))
 
   // Redirect to login if not authenticated

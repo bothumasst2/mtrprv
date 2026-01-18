@@ -1,5 +1,12 @@
 "use client"
 
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -61,7 +68,7 @@ export default function CoachDashboardPage() {
     // Get completed activities this week
     const startOfWeek = new Date()
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
-    const startOfWeekStr = startOfWeek.toISOString().split("T")[0]
+    const startOfWeekStr = getLocalDateString(startOfWeek)
 
     const { data: completedData } = await supabase
       .from("training_log")
@@ -188,15 +195,15 @@ export default function CoachDashboardPage() {
           </Link>
 
           <Link href="/ranking">
-          <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
-            <CardContent className="p-4">
-              <div className="flex flex-col items-start">
-                <TrendingUp className="h-8 w-8 text-white mb-2" />
-                <p className="text-2xl md:text-3xl font-bold">{stats.totalDistance}</p>
-                <p className="text-white text-sm">Total Distance (km)</p>
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
+              <CardContent className="p-4">
+                <div className="flex flex-col items-start">
+                  <TrendingUp className="h-8 w-8 text-white mb-2" />
+                  <p className="text-2xl md:text-3xl font-bold">{stats.totalDistance}</p>
+                  <p className="text-white text-sm">Total Distance (km)</p>
+                </div>
+              </CardContent>
+            </Card>
           </Link>
         </div>
 

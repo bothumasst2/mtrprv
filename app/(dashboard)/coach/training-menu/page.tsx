@@ -1,5 +1,13 @@
 "use client"
 
+function getLocalDateString() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -35,7 +43,7 @@ export default function CoachTrainingMenuPage() {
   const [formData, setFormData] = useState({
     training_type: "",
     training_details: "",
-    target_date: new Date().toISOString().split("T")[0],
+    target_date: getLocalDateString(),
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -76,7 +84,7 @@ export default function CoachTrainingMenuPage() {
       user_id: userId,
       training_type: formData.training_type,
       training_details: formData.training_details,
-      assigned_date: new Date().toISOString().split("T")[0],
+      assigned_date: getLocalDateString(),
       target_date: formData.target_date,
       status: "pending",
     }))
@@ -90,7 +98,7 @@ export default function CoachTrainingMenuPage() {
       setFormData({
         training_type: "",
         training_details: "",
-        target_date: new Date().toISOString().split("T")[0],
+        target_date: getLocalDateString(),
       })
     }
 

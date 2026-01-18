@@ -140,6 +140,7 @@ function CoachResponsiveSidebar() {
     { title: "Dashboard", url: "/coach/dashboard", icon: Home },
     { title: "Athletes", url: "/coach/athletes", icon: Users },
     { title: "Training Menu", url: "/coach/training-menu", icon: Calendar },
+    { title: "Logs Menu", url: "/coach/active-assignments", icon: Activity },
     { title: "Ranking", url: "/ranking", icon: Trophy },
     { title: "Profile", url: "/profile", icon: User },
   ]
@@ -240,7 +241,10 @@ function CoachResponsiveSidebar() {
             {menuItems.map((item, index) => {
               const isActive = activeIndex === index
               // Shorter titles for mobile
-              const mobileTitle = item.title === "Dashboard" ? "Home" : item.title === "Training Menu" ? "Menu" : item.title
+              const mobileTitle = item.title === "Dashboard" ? "Home" :
+                item.title === "Training Menu" ? "Menu" :
+                  item.title === "Logs Menu" ? "Logs" :
+                    item.title
               return (
                 <Link
                   key={item.title}

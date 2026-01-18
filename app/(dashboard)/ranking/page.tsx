@@ -119,14 +119,14 @@ export default function RankingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-strava-dark">
+    <div className="min-h-screen bg-[#1f1f1f]">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-xl md:text-3xl font-bold text-strava">Ranking</h1>
           <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance</p>
         </div>
 
-        <Card className="bg-strava-grey rounded-md shadow-sm border border-none py-2">
+        <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-2">
           <CardContent>
             <div className="space-y-1">
               {rankings.map((user) => (
@@ -147,7 +147,7 @@ export default function RankingPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold">{user.total_distance.toFixed(1)}</p>
+                    <p className="text-2xl font-bold">{user.total_distance.toFixed(2)}</p>
                     <p className="text-xs opacity-90">km</p>
                   </div>
                 </div>

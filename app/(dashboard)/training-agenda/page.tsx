@@ -34,8 +34,11 @@ interface TrainingAssignment {
   created_at?: string
 }
 
+type FilterStatus = "all" | "pending" | "completed" | "missed"
+
 export default function TrainingAgendaPage() {
   const [assignments, setAssignments] = useState<TrainingAssignment[]>([])
+  const [filter, setFilter] = useState<FilterStatus>("all")
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
@@ -69,13 +72,22 @@ export default function TrainingAgendaPage() {
       .eq("user_id", user.id)
 
     if (data) {
+      const today = getLocalDateString()
+
+      const processedData = data.map((item: TrainingAssignment) => {
+        if (item.status === "pending" && item.target_date < today) {
+          return { ...item, status: "missed" as const }
+        }
+        return item
+      })
+
       const statusPriority = (status: string) => {
         if (status === "pending") return 0
         if (status === "missed") return 1
         return 2 // completed
       }
 
-      const sortedData = data.sort((a, b) => {
+      const sortedData = processedData.sort((a, b) => {
         const priorityA = statusPriority(a.status)
         const priorityB = statusPriority(b.status)
 
@@ -131,84 +143,100 @@ export default function TrainingAgendaPage() {
   return (
     <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-lg md:text-3xl font-bold text-strava">Training Agenda</h1>
-          <p className="text-sm text-gray-500 mt-0">
-            Your assigned training schedule from your coach
-          </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <h1 className="text-lg md:text-3xl font-bold text-strava">Training Agenda</h1>
+            <p className="text-sm text-gray-500 mt-0">
+              Your assigned training schedule from your coach
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
+            {(["all", "pending", "completed", "missed"] as FilterStatus[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-all duration-200 ${filter === s
+                  ? "bg-strava text-white shadow-lg scale-104"
+                  : "bg-strava-darkgrey text-gray-400 hover:text-white"
+                  }`}
+              >
+                {s.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
           <div className="text-center py-8 text-strava">Loading training agenda...</div>
-        ) : assignments.length === 0 ? (
+        ) : assignments.filter(a => filter === "all" || a.status === filter).length === 0 ? (
           <Card className="bg-[#1f1f1f] rounded-md shadow-sm border border-none">
             <CardContent className="p-8 text-center">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                No Training Assigned
+              <Calendar className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xs font-medium text-gray-500 mb-2">
+                No {filter !== "all" ? filter : ""} Training Found
               </h3>
-              <p className="text-gray-600">
-                Your coach hasn't assigned any training yet.
-              </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {assignments.map((assignment) => (
-              <Card
-                key={assignment.id}
-                className="bg-[#1f1f1f] rounded-md shadow-sm border border-none"
-              >
-                <CardHeader className="pb-6">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-                      {getStatusIcon(assignment.status)}
-                      {assignment.training_type}
-                    </CardTitle>
-                    <span
-                      className={`text-sm font-medium ${getStatusColor(
-                        assignment.status
-                      )}`}
-                    >
-                      {getStatusText(assignment.status)}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-white text-[11px]">Target Date</p>
-                      <p className="text-strava font-bold">
-                        {new Date(assignment.target_date).toLocaleDateString()}
-                      </p>
+          <div className="space-y-2">
+            {assignments
+              .filter(a => filter === "all" || a.status === filter)
+              .map((assignment) => (
+                <Card
+                  key={assignment.id}
+                  className="bg-[#1f1f1f] rounded-md shadow-sm border border-none"
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-white flex items-center gap-2">
+                        {getStatusIcon(assignment.status)}
+                        {assignment.training_type}
+                      </CardTitle>
+                      <span
+                        className={`text-xs font-medium ${getStatusColor(
+                          assignment.status
+                        )}`}
+                      >
+                        {getStatusText(assignment.status)}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-white text-[11px]">Assigned Date</p>
-                      <p className="text-strava font-bold">
-                        {new Date(assignment.assigned_date).toLocaleDateString()}
-                      </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-white text-[10px]">Target Date</p>
+                        <p className="text-strava font-bold">
+                          {new Date(assignment.target_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white text-[10px]">Assigned Date</p>
+                        <p className="text-strava font-bold">
+                          {new Date(assignment.assigned_date).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  {assignment.training_details && (
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-white bg-strava-darkgrey p-4 rounded-sm whitespace-pre-wrap break-words">
-                        {assignment.training_details}
-                      </p>
-                    </div>
-                  )}
-
-                  {(assignment.status === "pending" ||
-                    assignment.status === "missed") && (
-                      <div className="bg-[#1f1f1f] border border-strava-darkgrey rounded-sm p-2 mt-2">
-                        <p className="text-gray-600 text-xs">
-                          <strong>Note:</strong> Training ini akan otomatis Completed saat submit setorun
+                    {assignment.training_details && (
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-white bg-strava-darkgrey p-4 rounded-sm whitespace-pre-wrap break-words">
+                          {assignment.training_details}
                         </p>
                       </div>
                     )}
-                </CardContent>
-              </Card>
-            ))}
+
+                    {(assignment.status === "pending" ||
+                      assignment.status === "missed") && (
+                        <div className="bg-[#1f1f1f] border border-strava-darkgrey rounded-sm p-2 mt-2">
+                          <p className="text-gray-600 text-xs">
+                            <strong>Note:</strong> Training ini akan otomatis Completed saat submit setorun
+                          </p>
+                        </div>
+                      )}
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         )}
       </div>

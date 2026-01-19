@@ -54,6 +54,13 @@ export default function DashboardPage() {
   const fetchStats = async () => {
     if (!user) return;
 
+    // Helper for local date string
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const day = String(now.getDate()).padStart(2, "0")
+    const today = `${year}-${month}-${day}`
+
     // Get total completed workouts this month
     const startOfMonth = new Date(
       new Date().getFullYear(),
@@ -70,16 +77,20 @@ export default function DashboardPage() {
       .eq("status", "completed")
       .gte("date", startOfMonth);
 
-    // Get pending training assignments (weekly training count)
-    const { data: weeklyData } = await supabase
+    // Get training assignments
+    const { data: assignmentsData } = await supabase
       .from("training_assignments")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "pending");
+      .select("status, target_date")
+      .eq("user_id", user.id);
+
+    // Count truly pending tasks (status is 'pending' AND target_date >= today)
+    const pendingCount = assignmentsData?.filter(
+      (item) => item.status === "pending" && item.target_date >= today
+    ).length || 0;
 
     setStats({
       totalWorkouts: totalData?.length || 0,
-      weeklyTraining: weeklyData?.length || 0,
+      weeklyTraining: pendingCount,
     });
   };
 

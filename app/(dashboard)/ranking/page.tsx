@@ -126,7 +126,7 @@ export default function RankingPage() {
           <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance</p>
         </div>
 
-        <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-2">
+        <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-1">
           <CardContent>
             <div className="space-y-1">
               {rankings.map((user) => (

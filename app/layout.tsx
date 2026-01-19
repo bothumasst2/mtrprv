@@ -3,12 +3,26 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { ProfileProvider } from "@/contexts/profile-context"
 import { Toaster } from "@/components/ui/toaster"
 import { PostHogProvider } from "./providers"
+import PwaRegistration from "@/components/PwaRegistration"
 import "./globals.css"
 
 export const metadata = {
-  title: "MTR Private Training",
+  title: "MTR Training",
   description: "Mommy Tonasa Runners – Training Tracker",
-  generator: 'v0.dev'
+  generator: 'v0.dev',
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/icons/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MTR Training",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ProfileProvider>{children}</ProfileProvider>
           </AuthProvider>
         </PostHogProvider>
+        <PwaRegistration />
         <Toaster />
       </body>
     </html>

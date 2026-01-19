@@ -288,7 +288,7 @@ export default function ActiveAssignmentsPage() {
 
     const sunday = new Date(monday)
     sunday.setDate(monday.getDate() + 6)
-    sunday.setHours(20, 0, 0, 0)
+    sunday.setHours(21, 0, 0, 0)
 
     const formatDateTime = (date: Date) => {
       return date.toLocaleString("en-GB", {

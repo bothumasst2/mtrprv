@@ -26,12 +26,16 @@ interface CoachStats {
   totalDistance: number
 }
 
-interface UserActivity {
+interface ActivityFeedItem {
   id: string
-  username: string
-  profile_photo: string | null
-  last_activity: string
-  total_distance: number
+  training_type: string
+  distance: number
+  date: string
+  created_at: string
+  user: {
+    username: string
+    profile_photo: string | null
+  }
 }
 
 export default function CoachDashboardPage() {
@@ -41,7 +45,7 @@ export default function CoachDashboardPage() {
     completedThisWeek: 0,
     totalDistance: 0,
   })
-  const [userActivities, setUserActivities] = useState<UserActivity[]>([])
+  const [userActivities, setUserActivities] = useState<ActivityFeedItem[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
@@ -58,23 +62,45 @@ export default function CoachDashboardPage() {
     // Get total users
     const { data: usersData } = await supabase.from("users").select("id").eq("role", "user")
 
-    // Get active assignments (pending + missed)
+    // Get active assignments (pending only)
     const { data: assignmentsData } = await supabase
       .from("training_assignments")
-      .select("id")
-      .eq("coach_id", user.id)
-      .in("status", ["pending", "missed"])
+      .select("status, target_date")
+      .eq("coach_id", user.id);
 
-    // Get completed activities this week
-    const startOfWeek = new Date()
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
-    const startOfWeekStr = getLocalDateString(startOfWeek)
+    const today = getLocalDateString();
+    const activeAssignmentsCount = assignmentsData?.filter(
+      (item) => item.status === "pending" && item.target_date >= today
+    ).length || 0;
+
+    // Get completed activities within specific weekly range: 
+    // Monday 2 AM to Sunday 8 PM
+    const now = new Date()
+    const currentDay = now.getDay()
+    const diffToMonday = (currentDay === 0 ? 6 : currentDay - 1)
+
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - diffToMonday)
+    monday.setHours(2, 0, 0, 0)
+
+    // If it's Monday but before 2 AM, the current "training week" is last week's
+    if (now < monday) {
+      monday.setDate(monday.getDate() - 7)
+    }
+
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    sunday.setHours(20, 0, 0, 0)
+
+    const startRange = monday.toISOString()
+    const endRange = sunday.toISOString()
 
     const { data: completedData } = await supabase
       .from("training_log")
       .select("id")
       .eq("status", "completed")
-      .gte("date", startOfWeekStr)
+      .gte("created_at", startRange)
+      .lte("created_at", endRange)
 
     // Get total distance from all users
     const { data: distanceData } = await supabase.from("training_log").select("distance").eq("status", "completed")
@@ -83,55 +109,54 @@ export default function CoachDashboardPage() {
 
     setStats({
       totalUsers: usersData?.length || 0,
-      activeAssignments: assignmentsData?.length || 0,
+      activeAssignments: activeAssignmentsCount,
       completedThisWeek: completedData?.length || 0,
       totalDistance: Math.round(totalDistance * 10) / 10, // Round to 1 decimal
     })
   }
 
   const fetchUserActivities = async () => {
-    // Get recent user activities with their total distances
-    const { data: users } = await supabase
-      .from("users")
-      .select("id, username, profile_photo")
-      .eq("role", "user")
-      .limit(10)
+    // Calculate weekly range: Monday 2 AM to Sunday 8 PM
+    const now = new Date()
+    const currentDay = now.getDay()
+    const diffToMonday = (currentDay === 0 ? 6 : currentDay - 1)
 
-    if (users) {
-      const activities = await Promise.all(
-        users.map(async (user) => {
-          // Get last activity date
-          const { data: lastActivity } = await supabase
-            .from("training_log")
-            .select("date")
-            .eq("user_id", user.id)
-            .eq("status", "completed")
-            .order("date", { ascending: false })
-            .limit(1)
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - diffToMonday)
+    monday.setHours(2, 0, 0, 0)
 
-          // Get total distance for this user
-          const { data: distanceData } = await supabase
-            .from("training_log")
-            .select("distance")
-            .eq("user_id", user.id)
-            .eq("status", "completed")
+    if (now < monday) {
+      monday.setDate(monday.getDate() - 7)
+    }
 
-          const totalDistance = distanceData?.reduce((sum, log) => sum + log.distance, 0) || 0
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    sunday.setHours(20, 0, 0, 0)
 
-          return {
-            id: user.id,
-            username: user.username,
-            profile_photo: user.profile_photo,
-            last_activity: lastActivity?.[0]?.date || "",
-            total_distance: Math.round(totalDistance * 10) / 10,
-          }
-        }),
-      )
+    const startRange = monday.toISOString()
+    const endRange = sunday.toISOString()
 
-      // Only show users who have actual activity (last_activity is not empty and total_distance > 0)
-      const activeUsers = activities.filter((activity) => activity.last_activity !== "" && activity.total_distance > 0)
+    // Fetch all completed training logs within the weekly range
+    const { data: activitiesData } = await supabase
+      .from("training_log")
+      .select(`
+        id,
+        training_type,
+        distance,
+        date,
+        created_at,
+        user:user_id (
+          username,
+          profile_photo
+        )
+      `)
+      .eq("status", "completed")
+      .gte("created_at", startRange)
+      .lte("created_at", endRange)
+      .order("created_at", { ascending: false })
 
-      setUserActivities(activeUsers)
+    if (activitiesData) {
+      setUserActivities(activitiesData as any)
     }
 
     setLoading(false)
@@ -150,21 +175,21 @@ export default function CoachDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-3 py-6 space-y-2">
         <div>
           <h1 className="text-xl md:text-4xl font-bold text-strava">Coach Dashboard</h1>
-          <p className="text-sm text-white mt-0">Overview of all your athletes and their progress</p>
+          <p className="text-xs text-strava-grey mt-0 mb-6">Overview of all your athletes and their progress</p>
         </div>
 
         {/* Clickable Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
           <Link href="/coach/athletes">
             <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
                   <Users className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.totalUsers}</p>
-                  <p className="text-blue-200 text-sm">Total Athletes</p>
+                  <p className="text-white text-xs">Total Athletes</p>
                 </div>
               </CardContent>
             </Card>
@@ -176,7 +201,7 @@ export default function CoachDashboardPage() {
                 <div className="flex flex-col items-start">
                   <Calendar className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.activeAssignments}</p>
-                  <p className="text-white text-sm">Active Assignments</p>
+                  <p className="text-white text-xs">Active Assignments</p>
                 </div>
               </CardContent>
             </Card>
@@ -188,7 +213,7 @@ export default function CoachDashboardPage() {
                 <div className="flex flex-col items-start">
                   <Activity className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.completedThisWeek}</p>
-                  <p className="text-white text-sm">Completed This Week</p>
+                  <p className="text-white text-xs">Completed This Week</p>
                 </div>
               </CardContent>
             </Card>
@@ -200,47 +225,53 @@ export default function CoachDashboardPage() {
                 <div className="flex flex-col items-start">
                   <TrendingUp className="h-8 w-8 text-white mb-2" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.totalDistance}</p>
-                  <p className="text-white text-sm">Total Distance (km)</p>
+                  <p className="text-white text-xs">Total Distance (km)</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
         </div>
 
-        {/* User Activities - Only show if there are active users */}
-        {userActivities.length > 0 && (
-          <Card className="bg-[#303030] rounded-2xl shadow-sm border border-none">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-white">Recent User Activities</CardTitle>
-            </CardHeader>
-            <CardContent>
+        {/* User Activities */}
+        <Card className="bg-[#303030] rounded-2xl shadow-sm border border-none">
+          <CardHeader>
+            <CardTitle className="text-xs font-semibold text-white">Recent User Activities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {userActivities.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-[10px] text-gray-500">
+                  Belum ada aktivitas di periode minggu ini.<br />
+                  (Senin 02:00 - Minggu 20:00)
+                </p>
+              </div>
+            ) : (
               <div className="space-y-1">
                 {userActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 bg-strava-dark rounded-2xl">
-                    <div className="flex items-center gap-3">
+                  <div key={activity.id} className="flex items-center justify-between p-2 bg-strava-dark rounded-xl">
+                    <div className="flex items-center gap-2">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={getSafeSrc(activity.profile_photo) || "/placeholder.svg"} />
+                        <AvatarImage src={getSafeSrc(activity.user.profile_photo) || "/placeholder.svg"} />
                         <AvatarFallback className="bg-white-500 text-white">
-                          {activity.username.charAt(0).toUpperCase()}
+                          {activity.user.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-white">{activity.username}</p>
-                        <p className="text-sm text-gray-500">
-                          Last activity: {new Date(activity.last_activity).toLocaleDateString()}
+                        <p className="font-small text-white text-xs">{activity.training_type}</p>
+                        <p className="text-[10px] text-gray-500">
+                          {activity.user.username} - {new Date(activity.date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-strava">{activity.total_distance} km</p>
-                      <p className="text-xs text-gray-600">Total distance</p>
+                      <p className="font-bold text-strava text-xs">{activity.distance} km</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

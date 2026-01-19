@@ -70,14 +70,14 @@ export default function CoachTrainingHistoryPage() {
   const handleDeleteTraining = async (id: string) => {
     // Show confirmation dialog
     const isConfirmed = window.confirm("Yakin mau delete training ini? Data akan terhapus permanen!")
-    
+
     if (!isConfirmed) {
       return // User cancelled
     }
-    
+
     // Set loading state for this specific item
     setDeletingId(id)
-    
+
     try {
       // Delete from Supabase training_log table
       const { error } = await supabase
@@ -93,10 +93,10 @@ export default function CoachTrainingHistoryPage() {
 
       // Remove from local state immediately for better UX
       setTrainingHistory(prev => prev.filter(item => item.id !== id))
-      
+
       // Show success message
       alert("Training berhasil dihapus!")
-      
+
     } catch (error) {
       console.error("Error deleting training:", error)
       alert("Gagal delete training record")
@@ -124,55 +124,50 @@ export default function CoachTrainingHistoryPage() {
           <p className="text-sm text-gray-600 mt-1">All athletes' training activities</p>
         </div>
 
-        <Card className="bg-strava-grey rounded-lg shadow-sm border border-none">
+        <Card className="bg-[#1f1f1f] rounded-lg shadow-sm border border-none">
           <CardHeader>
-            <CardTitle className="text-md font-semibold text-gray-800">Recent Training Activities</CardTitle>
+            <CardTitle className="text-xs font-semibold text-gray-400">Recent Training Activities</CardTitle>
           </CardHeader>
           <CardContent>
             {trainingHistory.length === 0 ? (
               <div className="text-center py-8">
                 <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No training activities found</p>
+                <p className="text-gray-500">No training activities found</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {trainingHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-4 bg-strava-dark rounded-2xl text-white"
+                    className="flex items-center justify-between p-3 bg-strava-dark rounded-xl text-white"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={getSafeSrc(item.user.profile_photo) || "/placeholder.svg"} />
                         <AvatarFallback className="bg-strava text-white">
                           {item.user.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      {item.status === "completed" ? (
-                        <CheckCircle className="h-6 w-6 text-strava" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-gray-400" />
-                      )}
                       <div>
-                        <p className="font-small">{item.training_type}</p>
-                        <p className="text-xs text-gray-400">
-                          {item.user.username} • {item.distance}km • {new Date(item.date).toLocaleDateString()}
+                        <p className="px-2 text-sm font-small">{item.training_type}</p>
+                        <p className="px-2 text-xs text-gray-400">
+                          {item.user.username} - {item.distance}km - {new Date(item.date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
                       {item.strava_link && (
                         <a
                           href={item.strava_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-strava-grey text-xs hover:text-strava"
+                          className="text-strava text-xs hover:text-strava"
                         >
-                          View on Strava
+                          Details
                         </a>
                       )}
-                      
+
                       <button
                         onClick={() => handleDeleteTraining(item.id)}
                         disabled={deletingId === item.id}

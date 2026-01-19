@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle, Clock, AlertTriangle, ArrowLeft } from "lucide-react"
+import { CheckCircle, Clock, AlertTriangle, ArrowLeft, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
+import XLSX from "xlsx-js-style"
 
 function getLocalDateString() {
   const now = new Date()
@@ -33,6 +34,17 @@ interface Assignment {
     profile_photo: string | null
   }
 }
+
+const TRAINING_TYPES = [
+  "EASY RUN ZONA 2",
+  "EASY RUN (EZ)",
+  "MEDIUM RUN (SPEED)",
+  "LONGRUN",
+  "FARTLEK RUN (SPEED)",
+  "INTERVAL RUN (SPEED)",
+  "RACE",
+  "STRENGHT SESSION",
+]
 
 type FilterStatus = "all" | "pending" | "completed" | "missed"
 
@@ -224,6 +236,157 @@ export default function ActiveAssignmentsPage() {
     }
   }
 
+  const handleExportReport = async () => {
+    // 1. Calculate Date Range (Monday 02 AM to Sunday 08 PM)
+    const now = new Date()
+    const monday = new Date(now)
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7)) // Go to Monday
+    monday.setHours(2, 0, 0, 0)
+
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    sunday.setHours(20, 0, 0, 0)
+
+    const formatDateTime = (date: Date) => {
+      return date.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }).toUpperCase()
+    }
+
+    // 2. Fetch all assignments in this range
+    const { data: reportData } = await supabase
+      .from("training_assignments")
+      .select(`
+        training_type,
+        target_date,
+        status,
+        users:user_id (
+          username
+        )
+      `)
+      .gte("target_date", monday.toISOString().split("T")[0])
+      .lte("target_date", sunday.toISOString().split("T")[0])
+
+    if (!reportData || reportData.length === 0) {
+      alert("No data found for this week (Mon 02:00 AM - Sun 08:00 PM).")
+      return
+    }
+
+    // 3. Prepare Excel Data
+    // Get unique users and map assignments
+    const usersList = Array.from(new Set(reportData.map((item: any) => item.users.username))).sort()
+
+    // Create matrix: [ [ "MTR WEEKLY TRAINING REPORT" ], [ "From: ...", "To: ..." ], [ "Athlete", ...TRAINING_TYPES ], [ "username", ...status ], ... ]
+    const wsData: any[][] = []
+
+    // Header Row 1: Title
+    wsData.push(["MTR WEEKLY TRAINING REPORT"])
+
+    // Header Row 2: Date Range
+    wsData.push([`From : ${formatDateTime(monday)}`, "", "", "", `To: ${formatDateTime(sunday)}`])
+
+    // Header Row 3: Column Names
+    wsData.push(["Athlete", "Training Menu"])
+
+    // Header Row 4: Sub-Column Names
+    wsData.push(["", ...TRAINING_TYPES])
+
+    // Data Rows
+    usersList.forEach((username) => {
+      const row = [username]
+      TRAINING_TYPES.forEach((type) => {
+        const assignment = reportData.find(
+          (item: any) =>
+            item.users.username === username &&
+            item.training_type.toUpperCase() === type.toUpperCase()
+        )
+
+        if (assignment) {
+          row.push(assignment.status === "completed" ? "Completed" : "Missed")
+        } else {
+          row.push("")
+        }
+      })
+      wsData.push(row)
+    })
+
+    // 4. Create Workbook and Worksheet
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(wsData)
+
+    // Merges
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }, // Title
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, // From
+      { s: { r: 1, c: 4 }, e: { r: 1, c: 8 } }, // To
+      { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } }, // Athlete header
+      { s: { r: 2, c: 1 }, e: { r: 2, c: 8 } }, // Training Menu header
+    ]
+
+    // 5. Apply Styles (using specific formatting for status)
+    // xlsx-style or xlsx handles styling differently. 
+    // Since styling usually requires a specialized library like xlsx-js-style,
+    // and we've installed xlsx-style, we'll try to use it if we can bridge it.
+    // However, basic XLSX doesn't support fill colors in browser without extra effort.
+    // I will use a dynamic import for style if needed or use standard cell formats.
+
+    // Let's iterate through cells to add styling properties
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+        if (!ws[cellAddress]) continue
+
+        // Basic font and alignment for all
+        ws[cellAddress].s = {
+          font: { sz: 10 },
+          alignment: { vertical: "center", horizontal: "center" },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" }
+          }
+        }
+
+        // Title styling
+        if (R === 0) {
+          ws[cellAddress].s.font = { bold: true, sz: 14 }
+        }
+
+        // Header color coding
+        if (R >= 4) {
+          const val = ws[cellAddress].v
+          if (C > 0) { // Not the Athlete column
+            if (val === "Completed") {
+              ws[cellAddress].s.fill = { fgColor: { rgb: "C6EFCE" } } // Light green
+              ws[cellAddress].s.font.color = { rgb: "000000" }
+            } else if (val === "Missed") {
+              ws[cellAddress].s.fill = { fgColor: { rgb: "FFC7CE" } } // Light red
+              ws[cellAddress].s.font.color = { rgb: "9C0006" }
+            } else if (val === "") {
+              ws[cellAddress].s.fill = { fgColor: { rgb: "FFFF00" } } // Yellow
+            }
+          }
+        }
+      }
+    }
+
+    // 6. Append sheet and Download
+    try {
+      XLSX.utils.book_append_sheet(wb, ws, "Weekly Report")
+      XLSX.writeFile(wb, `MTR_Weekly_Report_${new Date().toISOString().split('T')[0]}.xlsx`)
+    } catch (err) {
+      console.error("Export failed:", err)
+      alert("Export failed. Please check console for details.")
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-strava-dark">
@@ -240,39 +403,41 @@ export default function ActiveAssignmentsPage() {
       <div className="container mx-auto px-4 py-4 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/coach/dashboard">
-              <Button variant="ghost" className="p-1 h-8 w-8 text-white hover:bg-strava-darkgrey">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
             <div>
-              <h1 className="text-xl font-bold text-strava leading-tight">Logs Menu</h1>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest">Active Assignments</p>
+              <h1 className="text-xl font-bold text-strava leading-tight">Logs Training Menu</h1>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest">weekly training status</p>
             </div>
+            <Button
+              onClick={handleExportReport}
+              className="bg-green-600 hover:bg-green-700 text-white text-[10px] h-7 px-3 flex items-center gap-1 font-bold rounded-md ml-11"
+            >
+              <Download className="h-3 w-3" />
+              REPORT
+            </Button>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveFilter("all")}
-              className={`${getFilterButtonStyle("all")} !py-1 !px-3 !text-[11px]`}
+              className={`${getFilterButtonStyle("all")} !py-1 !px-2 !text-[11px]`}
             >
               <span>All ({getStatusCount("all")})</span>
             </button>
             <button
               onClick={() => setActiveFilter("pending")}
-              className={`${getFilterButtonStyle("pending")} !py-1 !px-3 !text-[11px]`}
+              className={`${getFilterButtonStyle("pending")} !py-1 !px-2 !text-[11px]`}
             >
               <span>Pending ({getStatusCount("pending")})</span>
             </button>
             <button
               onClick={() => setActiveFilter("completed")}
-              className={`${getFilterButtonStyle("completed")} !py-1 !px-3 !text-[11px]`}
+              className={`${getFilterButtonStyle("completed")} !py-1 !px-2 !text-[11px]`}
             >
               <span>Completed ({getStatusCount("completed")})</span>
             </button>
             <button
               onClick={() => setActiveFilter("missed")}
-              className={`${getFilterButtonStyle("missed")} !py-1 !px-3 !text-[11px]`}
+              className={`${getFilterButtonStyle("missed")} !py-1 !px-2 !text-[11px]`}
             >
               <span>Missed ({getStatusCount("missed")})</span>
             </button>

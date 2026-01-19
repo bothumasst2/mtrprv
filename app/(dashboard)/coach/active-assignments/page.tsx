@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle, Clock, AlertTriangle, ArrowLeft, Download } from "lucide-react"
+import { CheckCircle, Clock, AlertTriangle, ArrowLeft, Download, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 import XLSX from "xlsx-js-style"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 function getLocalDateString() {
   const now = new Date()
@@ -52,6 +64,9 @@ export default function ActiveAssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<FilterStatus>("all")
+  const [resendDialogOpen, setResendDialogOpen] = useState(false)
+  const [resendAssignment, setResendAssignment] = useState<Assignment | null>(null)
+  const [newTargetDate, setNewTargetDate] = useState(getLocalDateString())
   const { user } = useAuth()
 
   useEffect(() => {
@@ -233,6 +248,34 @@ export default function ActiveAssignmentsPage() {
       console.error("Delete failed:", error)
     } else {
       setAssignments((prev) => prev.filter((item) => item.id !== id))
+    }
+  }
+
+  const handleResend = async () => {
+    if (!resendAssignment || !newTargetDate) return
+
+    const { error } = await supabase
+      .from("training_assignments")
+      .update({
+        assigned_date: getLocalDateString(),
+        target_date: newTargetDate,
+        status: "pending"
+      })
+      .eq("id", resendAssignment.id)
+
+    if (!error) {
+      setAssignments((prev) =>
+        prev.map((a) =>
+          a.id === resendAssignment.id
+            ? { ...a, assigned_date: getLocalDateString(), target_date: newTargetDate, status: "pending" }
+            : a
+        )
+      )
+      setResendDialogOpen(false)
+      setResendAssignment(null)
+    } else {
+      console.error("Resend failed:", error)
+      alert("Resend failed. Please try again.")
     }
   }
 
@@ -495,22 +538,88 @@ export default function ActiveAssignmentsPage() {
                     </div>
                   </div>
 
-                  {assignment.status !== "completed" && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="w-full h-6 text-[9px] rounded-lg mt-0.5 font-bold"
-                      onClick={() => handleDelete(assignment.id)}
-                    >
-                      Delete
-                    </Button>
-                  )}
+                  <div className="flex flex-col gap-1 mt-auto">
+                    {assignment.status === "missed" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-6 text-[9px] rounded-lg font-bold border-strava text-strava hover:bg-strava hover:text-white"
+                        onClick={() => {
+                          setResendAssignment(assignment)
+                          setNewTargetDate(getLocalDateString())
+                          setResendDialogOpen(true)
+                        }}
+                      >
+                        <RefreshCw className="h-2.5 w-2.5 mr-1" />
+                        Re-send
+                      </Button>
+                    )}
+
+                    {assignment.status !== "completed" && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="w-full h-6 text-[9px] rounded-lg font-bold"
+                        onClick={() => handleDelete(assignment.id)}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      <AlertDialog open={resendDialogOpen} onOpenChange={setResendDialogOpen}>
+        <AlertDialogContent className="bg-[#1f1f1f] border border-strava-darkgrey text-white rounded-2xl max-w-[90vw] sm:max-w-lg">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-2 bg-strava/10 rounded-full">
+                <RefreshCw className="h-5 w-5 text-strava" />
+              </div>
+              <AlertDialogTitle className="text-strava font-bold">Re-send Training Menu</AlertDialogTitle>
+            </div>
+            <div className="text-gray-400 text-sm space-y-3">
+              <div className="bg-strava-dark/50 p-3 rounded-xl border border-strava-darkgrey/30">
+                <p><span className="text-xs text-strava font-bold">Athlete:</span> <span className="text-xs">{resendAssignment?.user.username}</span></p>
+                <p><span className="text-xs text-strava font-bold">Menu:</span> <span className="text-xs">{resendAssignment?.training_type}</span></p>
+                <p className="line-clamp-20"><span className="text-xs text-strava font-bold">Details:</span> <span className="text-xs">{resendAssignment?.training_details}</span></p>
+              </div>
+
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="new_target_date" className="text-strava text-xs font-bold">Set New Target Date</Label>
+                <Input
+                  id="new_target_date"
+                  type="date"
+                  value={newTargetDate}
+                  onChange={(e) => setNewTargetDate(e.target.value)}
+                  className="bg-[#2a2a2a] border-strava-darkgrey text-white text-xs focus:border-strava"
+                />
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel
+              className="bg-transparent border-gray-700 text-gray-400 hover:bg-strava-darkgrey hover:text-white rounded-xl text-xs h-9"
+              onClick={() => {
+                setResendDialogOpen(false)
+                setResendAssignment(null)
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResend}
+              className="bg-strava hover:bg-strava-light text-white border-none rounded-xl text-xs h-9 font-bold"
+            >
+              Re-Send Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -22,12 +22,15 @@ export default function LoginPage() {
   const { signIn, user } = useAuth()
   const router = useRouter()
 
-  // Redirect if already logged in
+  // Redirect if already logged in - handled by root page or auth context
   useEffect(() => {
-    if (user) {
-      router.replace("/dashboard")
+    if (user && !loading) {
+      // The redirection will be handled by either:
+      // 1. The signIn function in auth-context (if just logged in)
+      // 2. The layout's role-based redirect if they manually navigate here
+      // 3. The root page if they land there
     }
-  }, [user, router])
+  }, [user, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

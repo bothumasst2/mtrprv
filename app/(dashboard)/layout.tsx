@@ -25,7 +25,6 @@ function HeaderContent() {
   const handleSignOut = async () => {
     try {
       await signOut()
-      router.replace("/login")
     } catch (error) {
       console.error("Error signing out:", error)
     }

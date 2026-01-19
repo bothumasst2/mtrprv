@@ -100,8 +100,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+    } finally {
+      // Force a full page reload and redirect to login
+      // This is more robust for PWA standalone mode
+      window.location.href = "/login"
+    }
   }
 
   return <AuthContext.Provider value={{ user, loading, signIn, signOut }}>{children}</AuthContext.Provider>

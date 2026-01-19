@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { MTRLogo } from "@/components/mtr-logo"
+import InstallPrompt from "@/components/InstallPrompt"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/contexts/auth-context"
 import { useProfile } from "@/contexts/profile-context"
@@ -193,6 +194,7 @@ export default function DashboardLayout({
         <main className={shouldHideSidebar ? "" : "pb-20"}>{children}</main>
       </div>
       {!shouldHideSidebar && <AppSidebar />}
+      <InstallPrompt />
     </div>
   )
 }

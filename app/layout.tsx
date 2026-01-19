@@ -3,7 +3,7 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { ProfileProvider } from "@/contexts/profile-context"
 import { Toaster } from "@/components/ui/toaster"
 import { PostHogProvider } from "./providers"
-import PwaRegistration from "@/components/PwaRegistration"
+import { PwaProvider } from "@/contexts/pwa-context"
 import "./globals.css"
 
 export const metadata = {
@@ -30,11 +30,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen font-sans antialiased">
         <PostHogProvider>
-          <AuthProvider>
-            <ProfileProvider>{children}</ProfileProvider>
-          </AuthProvider>
+          <PwaProvider>
+            <AuthProvider>
+              <ProfileProvider>{children}</ProfileProvider>
+            </AuthProvider>
+          </PwaProvider>
         </PostHogProvider>
-        <PwaRegistration />
         <Toaster />
       </body>
     </html>

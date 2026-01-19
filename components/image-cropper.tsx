@@ -1,8 +1,8 @@
 "use client"
 
-import React from "react"
-
-import { useState, useRef, useCallback } from "react"
+import { useState, useCallback } from "react"
+import Cropper from "react-easy-crop"
+import type { Area, Point } from "react-easy-crop"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Card, CardContent } from "@/components/ui/card"
@@ -13,169 +13,159 @@ interface ImageCropperProps {
   onCancel: () => void
 }
 
-export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps) {
-  const [scale, setScale] = useState([1])
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const imageRef = useRef<HTMLImageElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+// Utility function to create cropped image
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener("load", () => resolve(image))
+    image.addEventListener("error", (error) => reject(error))
+    image.setAttribute("crossOrigin", "anonymous")
+    image.src = url
+  })
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    })
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area,
+  outputSize = 300
+): Promise<File> {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+
+  if (!ctx) {
+    throw new Error("No 2d context")
   }
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging || !containerRef.current) return
+  // Set canvas size to desired output size
+  canvas.width = outputSize
+  canvas.height = outputSize
 
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const containerSize = 200
-      const imageSize = containerSize * scale[0]
+  // Draw circular clipped image
+  ctx.beginPath()
+  ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2)
+  ctx.clip()
 
-      // Calculate bounds to keep image within container
-      const maxX = (imageSize - containerSize) / 2
-      const maxY = (imageSize - containerSize) / 2
-
-      const newX = Math.max(-maxX, Math.min(maxX, e.clientX - dragStart.x))
-      const newY = Math.max(-maxY, Math.min(maxY, e.clientY - dragStart.y))
-
-      setPosition({ x: newX, y: newY })
-    },
-    [isDragging, dragStart, scale],
+  // Draw the cropped image
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    outputSize,
+    outputSize
   )
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const file = new File([blob], "profile-photo.jpg", { type: "image/jpeg" })
+          resolve(file)
+        } else {
+          reject(new Error("Canvas is empty"))
+        }
+      },
+      "image/jpeg",
+      0.95
+    )
+  })
+}
+
+export function ImageCropper({ imageSrc, onCropComplete, onCancel }: ImageCropperProps) {
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const onCropCompleteHandler = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels)
   }, [])
 
-  React.useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove)
-        document.removeEventListener("mouseup", handleMouseUp)
-      }
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp])
-
-  // Reset position when scale changes to keep image centered
-  React.useEffect(() => {
-    setPosition({ x: 0, y: 0 })
-  }, [scale])
-
-  const getCroppedImage = async (): Promise<File> => {
-    const canvas = canvasRef.current
-    const image = imageRef.current
-    if (!canvas || !image) throw new Error("Canvas or image not found")
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) throw new Error("Canvas context not found")
-
-    const size = 300 // Output size
-    canvas.width = size
-    canvas.height = size
-
-    // Calculate the crop area
-    const cropSize = 200 // Crop area size
-    const scaleValue = scale[0]
-
-    // Draw the cropped and scaled image
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
-    ctx.clip()
-
-    const drawSize = cropSize * scaleValue
-    const drawX = (size - drawSize) / 2 + (position.x * size) / cropSize
-    const drawY = (size - drawSize) / 2 + (position.y * size) / cropSize
-
-    ctx.drawImage(image, drawX, drawY, drawSize, drawSize)
-    ctx.restore()
-
-    return new Promise((resolve) => {
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const file = new File([blob], "profile-photo.jpg", { type: "image/jpeg" })
-            resolve(file)
-          }
-        },
-        "image/jpeg",
-        0.9,
-      )
-    })
-  }
-
   const handleSave = async () => {
+    if (!croppedAreaPixels) return
+
+    setIsSaving(true)
     try {
-      const croppedFile = await getCroppedImage()
+      const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels)
       onCropComplete(croppedFile)
     } catch (error) {
       console.error("Error cropping image:", error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md bg-[#1f1f1f] border-strava-darkgrey">
         <CardContent className="p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-center">Adjust Your Photo</h3>
+          <h3 className="text-lg font-semibold text-center text-strava">Adjust Your Photo</h3>
 
           {/* Crop Area */}
-          <div className="relative mx-auto" style={{ width: 200, height: 200 }}>
-            <div
-              ref={containerRef}
-              className="absolute inset-0 rounded-full border-2 border-orange-500 overflow-hidden cursor-move bg-gray-100"
-              onMouseDown={handleMouseDown}
-            >
-              <img
-                ref={imageRef}
-                src={imageSrc || "/placeholder.svg"}
-                alt="Crop preview"
-                className="absolute select-none"
-                style={{
-                  width: 200 * scale[0],
-                  height: 200 * scale[0],
-                  left: "50%",
-                  top: "50%",
-                  transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
-                  objectFit: "cover",
-                }}
-                draggable={false}
-              />
-            </div>
-            {/* Grid lines for better positioning */}
-            <div className="absolute inset-0 rounded-full pointer-events-none">
-              <div className="absolute top-1/3 left-0 right-0 h-px bg-white opacity-30" />
-              <div className="absolute top-2/3 left-0 right-0 h-px bg-white opacity-30" />
-              <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white opacity-30" />
-              <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white opacity-30" />
-            </div>
+          <div className="relative mx-auto rounded-2xl overflow-hidden bg-black" style={{ width: 280, height: 280 }}>
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropCompleteHandler}
+              style={{
+                containerStyle: {
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "1rem",
+                },
+                cropAreaStyle: {
+                  border: "3px solid #fc4c02",
+                },
+              }}
+            />
           </div>
 
-          {/* Scale Slider */}
+          {/* Zoom Slider */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Zoom</label>
-            <Slider value={scale} onValueChange={setScale} min={0.5} max={3} step={0.1} className="w-full" />
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium text-gray-400">Zoom</label>
+              <span className="text-xs text-strava">{zoom.toFixed(1)}x</span>
+            </div>
+            <Slider
+              value={[zoom]}
+              onValueChange={(value) => setZoom(value[0])}
+              min={1}
+              max={3}
+              step={0.05}
+              className="w-full"
+            />
           </div>
 
-          {/* Hidden Canvas */}
-          <canvas ref={canvasRef} className="hidden" />
+          {/* Instructions */}
+          <p className="text-xs text-gray-500 text-center">
+            Drag to reposition • Scroll or use slider to zoom
+          </p>
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onCancel} className="flex-1 bg-transparent">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSaving}
+              className="flex-1 bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} className="flex-1 bg-orange-500 hover:bg-orange-600">
-              Save Photo
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="flex-1 bg-strava hover:bg-strava-light text-white font-bold"
+            >
+              {isSaving ? "Saving..." : "Save Photo"}
             </Button>
           </div>
         </CardContent>

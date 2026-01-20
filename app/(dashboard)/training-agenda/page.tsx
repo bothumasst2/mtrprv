@@ -142,7 +142,7 @@ export default function TrainingAgendaPage() {
 
   return (
     <div className="min-h-screen bg-strava-dark">
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-4 py-6 space-y-3">
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-lg md:text-3xl font-bold text-strava">Training Agenda</h1>

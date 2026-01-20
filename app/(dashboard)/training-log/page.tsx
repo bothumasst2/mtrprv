@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle, XCircle, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
+import { WeeklyActivityChart } from "@/components/WeeklyActivityChart"
 
 interface TrainingLog {
   id: string
@@ -122,7 +123,7 @@ export default function TrainingLogPage() {
 
   return (
     <div className="min-h-screen bg-strava-dark">
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-4 py-6 space-y-3">
         <div className="flex items-center justify-between">
           <h1 className="text-md md:text-xl font-semibold text-white">Training Log</h1>
           <Button
@@ -133,6 +134,8 @@ export default function TrainingLogPage() {
             Add Training
           </Button>
         </div>
+
+        <WeeklyActivityChart logs={trainingLogs} />
 
         {showForm && (
           <Card className="bg-[#2f2f2f] rounded-lg shadow-sm !border-none">
@@ -216,20 +219,20 @@ export default function TrainingLogPage() {
 
         <Card className="bg-[#1f1f1f] rounded-md shadow-sm border border-none">
           <CardHeader>
-            <CardTitle className="text-md font-semibold text-white">Training History</CardTitle>
+            <CardTitle className="text-sm font-semibold text-white">Training History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {trainingLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between p-4 bg-strava-darkgrey rounded-lg text-white">
-                  <div className="flex items-center gap-3">
+                <div key={log.id} className="flex items-center justify-between p-3 bg-strava-darkgrey rounded-lg text-white">
+                  <div className="flex items-center gap-2">
                     {log.status === "completed" ? (
                       <CheckCircle className="h-6 w-6 text-green-400" />
                     ) : (
                       <XCircle className="h-6 w-6 text-strava" />
                     )}
                     <div>
-                      <p className="font-roboto-bold text-sm-mobile">{log.training_type}</p>
+                      <p className="font-roboto-bold text-xs">{log.training_type}</p>
                       <p className="text-xs text-gray-400">
                         {log.distance}km • {new Date(log.date).toLocaleDateString()}
                       </p>

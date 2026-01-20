@@ -91,7 +91,7 @@ function UserBottomNavbar() {
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="relative bg-[#242424]">
         <div
-          className="absolute top-2 h-12 bg-[#3a3a3a] rounded-full transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]"
+          className="absolute top-2 h-12 bg-[#3a3a3a] rounded-full transition-all duration-500 ease-&lsqb;cubic-bezier(0.68,-0.55,0.265,1.55)&rsqb;"
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
@@ -228,7 +228,7 @@ function CoachResponsiveSidebar() {
         <div className="relative bg-[#242424]">
           {/* Animated indicator */}
           <div
-            className="absolute top-2 h-12 bg-[#3a3a3a] rounded-full transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)]"
+            className="absolute top-2 h-12 bg-[#3a3a3a] rounded-full transition-all duration-500 ease-&lsqb;cubic-bezier(0.68,-0.55,0.265,1.55)&rsqb;"
             style={{
               left: indicatorStyle.left,
               width: indicatorStyle.width,

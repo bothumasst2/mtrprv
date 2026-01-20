@@ -146,7 +146,7 @@ export default function TrainingAgendaPage() {
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-lg md:text-3xl font-bold text-strava">Training Agenda</h1>
-            <p className="text-sm text-gray-500 mt-0">
+            <p className="text-xs text-gray-500 mt-0">
               Your assigned training schedule from your coach
             </p>
           </div>

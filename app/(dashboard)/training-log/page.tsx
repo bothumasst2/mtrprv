@@ -197,7 +197,8 @@ export default function TrainingLogPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="strava_link" className="text-white">URL :</Label>
-                  <Input type="url"
+                  <Input
+                    type="text"
                     id="strava_link"
                     value={formData.strava_link}
                     onChange={(e) => setFormData((prev) => ({ ...prev, strava_link: e.target.value }))}

@@ -65,7 +65,6 @@ export default function HomePage() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <MTRLogo className="w-24 h-16 mx-auto mb-4" />
-        <p>Loading...</p>
       </div>
     </div>
   )

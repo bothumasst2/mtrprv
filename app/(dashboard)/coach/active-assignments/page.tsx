@@ -503,7 +503,7 @@ export default function ActiveAssignmentsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {filteredAssignments.map((assignment) => (
                 <div key={assignment.id} className="bg-[#1f1f1f] border border-strava-darkgrey/40 rounded-xl p-2.5 transition-all hover:bg-strava-darkgrey/20 flex flex-col justify-between">
                   <div>
@@ -539,6 +539,13 @@ export default function ActiveAssignmentsPage() {
                   </div>
 
                   <div className="flex flex-col gap-1 mt-auto">
+                    {assignment.training_details && (
+                      <div className="mb-1 p-2 bg-strava-dark/30 rounded-lg border border-strava-darkgrey/20">
+                        <p className="text-[9px] text-gray-400 leading-relaxed italic">
+                          {assignment.training_details}
+                        </p>
+                      </div>
+                    )}
                     {assignment.status === "missed" && (
                       <Button
                         variant="outline"

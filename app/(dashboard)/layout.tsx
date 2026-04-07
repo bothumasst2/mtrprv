@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { AppSidebar } from "@/components/app-sidebar"
-import { MTRLogo } from "@/components/mtr-logo"
-import InstallPrompt from "@/components/InstallPrompt"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { useAuth } from "@/contexts/auth-context"
-import { useProfile } from "@/contexts/profile-context"
-import Link from "next/link"
-import { supabase } from "@/lib/supabase"
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { AppSidebar } from "@/components/app-sidebar";
+import { MTRLogo } from "@/components/mtr-logo";
+import InstallPrompt from "@/components/InstallPrompt";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/auth-context";
+import { useProfile } from "@/contexts/profile-context";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 function getSafeSrc(src: string | null | undefined) {
-  return src && src.trim().length > 0 ? src : undefined
+  return src && src.trim().length > 0 ? src : undefined;
 }
 
 function HeaderContent() {
-  const { user, signOut } = useAuth()
-  const { profilePhoto } = useProfile()
-  const [showMenu, setShowMenu] = useState(false)
-  const router = useRouter()
+  const { user, signOut } = useAuth();
+  const { profilePhoto } = useProfile();
+  const [showMenu, setShowMenu] = useState(false);
+  const router = useRouter();
 
   const handleSignOut = async () => {
     try {
-      await signOut()
+      await signOut();
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("Error signing out:", error);
     }
-  }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-strava-darkgrey backdrop-blur border-b border-none px-4 py-4">
@@ -44,7 +44,9 @@ function HeaderContent() {
             className="focus:outline-none"
           >
             <Avatar className="h-12 w-12 border-2 border-orange-500 cursor-pointer hover:border-orange-600 transition-colors">
-              <AvatarImage src={getSafeSrc(profilePhoto) || "/placeholder.svg"} />
+              <AvatarImage
+                src={getSafeSrc(profilePhoto) || "/placeholder.svg"}
+              />
               <AvatarFallback className="bg-orange-500 text-white">
                 {(user?.email?.[0] || "U").toUpperCase()}
               </AvatarFallback>
@@ -67,7 +69,14 @@ function HeaderContent() {
                   onClick={() => setShowMenu(false)}
                   className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#3a3a3a] transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
@@ -80,7 +89,14 @@ function HeaderContent() {
                   onClick={handleSignOut}
                   className="flex items-center gap-3 w-full px-4 py-3 text-strava hover:bg-[#3a3a3a] transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                     <polyline points="16 17 21 12 16 7" />
                     <line x1="21" y1="12" x2="9" y2="12" />
@@ -93,77 +109,86 @@ function HeaderContent() {
         </div>
       </div>
     </header>
-  )
+  );
 }
 
 export default function DashboardLayout({
   children,
   hideSidebar = false,
 }: {
-  children: React.ReactNode
-  hideSidebar?: boolean
+  children: React.ReactNode;
+  hideSidebar?: boolean;
 }) {
-  const { user, loading } = useAuth()
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [roleLoading, setRoleLoading] = useState(true)
-  const router = useRouter()
-  const pathname = usePathname()
+  const { user, loading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const pathsWithoutSidebar: string[] = []
-  const shouldHideSidebar = pathsWithoutSidebar.some((path) => pathname.startsWith(path))
+  const pathsWithoutSidebar: string[] = [];
+  const shouldHideSidebar = pathsWithoutSidebar.some((path) =>
+    pathname.startsWith(path),
+  );
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login")
+      router.replace("/login");
     }
-  }, [user, loading, router])
+  }, [user, loading, router]);
 
   // Fetch user role
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!user) {
-        setUserRole(null)
-        setRoleLoading(false)
-        return
+        setUserRole(null);
+        setRoleLoading(false);
+        return;
       }
 
       try {
-        const { data, error } = await supabase.from("users").select("role").eq("id", user.id).single()
+        const { data, error } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .single();
         if (error) {
-          console.error("Error fetching user role:", error)
-          setUserRole("user")
+          console.error("Error fetching user role:", error);
+          setUserRole("user");
         } else {
-          setUserRole(data?.role || "user")
+          setUserRole(data?.role || "user");
         }
       } catch (error) {
-        console.error("Error fetching user role:", error)
-        setUserRole("user")
+        console.error("Error fetching user role:", error);
+        setUserRole("user");
       } finally {
-        setRoleLoading(false)
+        setRoleLoading(false);
       }
-    }
+    };
 
     if (!loading && user) {
-      fetchUserRole()
+      fetchUserRole();
     }
-  }, [user, loading])
+  }, [user, loading]);
 
   // Role-based redirect protection
   useEffect(() => {
     if (!loading && !roleLoading && user && userRole) {
       // If coach/admin is on user dashboard, redirect to coach dashboard
-      if ((userRole === "coach" || userRole === "admin") && pathname === "/dashboard") {
-        console.log("Redirecting coach/admin to coach dashboard")
-        router.replace("/coach/dashboard")
+      if (
+        (userRole === "coach" || userRole === "admin") &&
+        pathname === "/dashboard"
+      ) {
+        console.log("Redirecting coach/admin to coach dashboard");
+        router.replace("/coach/dashboard");
       }
       // If user is on coach dashboard, redirect to user dashboard
       else if (userRole === "user" && pathname.startsWith("/coach")) {
-        console.log("Redirecting user to user dashboard")
-        router.replace("/dashboard")
+        console.log("Redirecting user to user dashboard");
+        router.replace("/dashboard");
       }
     }
-  }, [user, userRole, loading, roleLoading, router, pathname])
+  }, [user, userRole, loading, roleLoading, router, pathname]);
 
   // Show loading while checking authentication
   if (loading || roleLoading) {
@@ -174,16 +199,16 @@ export default function DashboardLayout({
           <p>Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Redirect if no user
   if (!user) {
-    return null
+    return null;
   }
 
   // Check if current user is coach/admin for desktop sidebar margin
-  const isCoachOrAdmin = userRole === "coach" || userRole === "admin"
+  const isCoachOrAdmin = userRole === "coach" || userRole === "admin";
 
   return (
     <div className="min-h-screen bg-gray-50/30">
@@ -195,5 +220,5 @@ export default function DashboardLayout({
       {!shouldHideSidebar && <AppSidebar />}
       <InstallPrompt />
     </div>
-  )
+  );
 }

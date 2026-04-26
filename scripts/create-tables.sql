@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL,
   profile_photo TEXT,
   strava_link TEXT,
+  kelas TEXT CHECK (kelas IN ('42', '21', '10', 'No-Race')) DEFAULT 'No-Race',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

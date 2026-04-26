@@ -16,10 +16,18 @@ interface RankingUser {
   profile_photo: string | null
   total_distance: number
   rank: number
+  kelas: string | null
 }
 
+const RANKING_KELAS = ["42", "21", "10", "No-Race"] as const
+
 export default function RankingPage() {
-  const [rankings, setRankings] = useState<RankingUser[]>([])
+  const [rankingsByKelas, setRankingsByKelas] = useState<Record<string, RankingUser[]>>({
+    "42": [],
+    "21": [],
+    "10": [],
+    "No-Race": [],
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -39,7 +47,8 @@ export default function RankingPage() {
         users (
           id,
           username,
-          profile_photo
+          profile_photo,
+          kelas
         )
       `)
       .eq("status", "completed")
@@ -65,18 +74,25 @@ export default function RankingPage() {
         }
       })
 
-      const sortedRankings = Array.from(userDistances.entries())
+      const allRankings = Array.from(userDistances.entries())
         .map(([userId, data], index) => ({
           id: userId,
           username: data.user.username,
           profile_photo: data.user.profile_photo,
+          kelas: data.user.kelas,
           total_distance: data.totalDistance,
           rank: index + 1,
         }))
-        .sort((a, b) => b.total_distance - a.total_distance)
-        .map((user, index) => ({ ...user, rank: index + 1 }))
 
-      setRankings(sortedRankings)
+      const nextRankings = RANKING_KELAS.reduce<Record<string, RankingUser[]>>((acc, kelas) => {
+        acc[kelas] = allRankings
+          .filter((user) => String(user.kelas || "No-Race") === kelas)
+          .sort((a, b) => b.total_distance - a.total_distance)
+          .map((user, index) => ({ ...user, rank: index + 1 }))
+        return acc
+      }, {})
+
+      setRankingsByKelas(nextRankings)
     }
     setLoading(false)
   }
@@ -118,43 +134,68 @@ export default function RankingPage() {
     )
   }
 
+  const visibleKelas = RANKING_KELAS.filter(
+    (kelas) => (rankingsByKelas[kelas] || []).length > 0,
+  )
+
+  const RankingList = ({ title, data }: { title: string; data: RankingUser[] }) => (
+    <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-1">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-center text-sm font-bold uppercase tracking-wider text-strava">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <div className="py-8 text-center text-xs text-gray-400">No runners yet</div>
+        ) : (
+          <div className="space-y-1">
+            {data.map((user) => (
+              <div
+                key={user.id}
+                className={`flex items-center justify-between p-4 rounded-lg text-white ${getRankColor(user.rank)}`}
+              >
+                <div className="flex min-w-0 items-center gap-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center">{getRankIcon(user.rank)}</div>
+                  <Avatar className="h-12 w-12 shrink-0">
+                    <AvatarImage src={getSafeSrc(user.profile_photo) || "/placeholder.svg"} />
+                    <AvatarFallback className="bg-orange-500 text-white">
+                      {user.username.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm-mobile font-semibold">{user.username}</p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-2xl font-bold">{user.total_distance.toFixed(2)}</p>
+                  <p className="text-xs opacity-90">km</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+
   return (
     <div className="min-h-screen bg-[#1f1f1f]">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-xl md:text-3xl font-bold text-strava">Ranking</h1>
-          <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance</p>
+          <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance per class</p>
         </div>
 
-        <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-1">
-          <CardContent>
-            <div className="space-y-1">
-              {rankings.map((user) => (
-                <div
-                  key={user.id}
-                  className={`flex items-center justify-between p-4 rounded-lg text-white ${getRankColor(user.rank)}`}
-                >
-                  <div className="flex items-center gap-1">
-                    <div className="flex items-center justify-center w-10 h-10">{getRankIcon(user.rank)}</div>
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={getSafeSrc(user.profile_photo) || "/placeholder.svg"} />
-                      <AvatarFallback className="bg-orange-500 text-white">
-                        {user.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold text-sm-mobile">{user.username}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">{user.total_distance.toFixed(2)}</p>
-                    <p className="text-xs opacity-90">km</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {visibleKelas.map((kelas) => (
+            <RankingList
+              key={kelas}
+              title={kelas === "No-Race" ? "No Race" : `${kelas}K`}
+              data={rankingsByKelas[kelas] || []}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )

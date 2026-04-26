@@ -73,6 +73,7 @@ export default function ProfilePage() {
         username: user.email?.split("@")[0] || "User",
         profile_photo: null,
         strava_link: null,
+        kelas: "No-Race",
       })
 
       if (!error) {

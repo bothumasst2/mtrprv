@@ -1,8 +1,10 @@
 -- Add role column to users table
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT CHECK (role IN ('user', 'coach', 'admin')) DEFAULT 'user';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS kelas TEXT CHECK (kelas IN ('42', '21', '10', 'No-Race')) DEFAULT 'No-Race';
 
 -- Update existing users to have 'user' role by default
 UPDATE users SET role = 'user' WHERE role IS NULL;
+UPDATE users SET kelas = 'No-Race' WHERE kelas IS NULL;
 
 -- Create training_assignments table for coach-to-user assignments
 CREATE TABLE IF NOT EXISTS training_assignments (

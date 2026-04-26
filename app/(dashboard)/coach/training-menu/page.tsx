@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Send, AlertCircle } from "lucide-react";
+import { Plus, Send, AlertCircle, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -35,7 +35,10 @@ interface User {
   id: string;
   username: string;
   email: string;
+  kelas: string | null;
 }
+
+const KELAS_OPTIONS = ["42", "21", "10", "No-Race"] as const;
 
 const TRAINING_TYPES = [
   "EASY RUN ZONA 2",
@@ -59,6 +62,8 @@ export default function CoachTrainingMenuPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterKelas, setFilterKelas] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -68,11 +73,26 @@ export default function CoachTrainingMenuPage() {
   const fetchUsers = async () => {
     const { data } = await supabase
       .from("users")
-      .select("id, username, email")
+      .select("id, username, email, kelas")
       .eq("role", "user")
       .order("username", { ascending: true });
     setUsers(data || []);
   };
+
+  const filteredUsers = users.filter((currentUser) => {
+    const matchesSearch = currentUser.username.toLowerCase().includes(
+      searchQuery.toLowerCase(),
+    );
+    const matchesKelas = filterKelas
+      ? String(currentUser.kelas || "No-Race") === filterKelas
+      : true;
+
+    return matchesSearch && matchesKelas;
+  });
+
+  const availableKelasOptions = KELAS_OPTIONS.filter((kelas) =>
+    users.some((currentUser) => String(currentUser.kelas || "No-Race") === kelas)
+  );
 
   const handleUserToggle = (userId: string) => {
     setSelectedUsers((prev) =>
@@ -83,14 +103,18 @@ export default function CoachTrainingMenuPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
+    const visibleIds = filteredUsers.map((currentUser) => currentUser.id);
+    const allVisibleSelected = visibleIds.length > 0 &&
+      visibleIds.every((id) => selectedUsers.includes(id));
+
+    if (allVisibleSelected) {
+      setSelectedUsers((prev) => prev.filter((id) => !visibleIds.includes(id)));
     } else {
-      setSelectedUsers(users.map((user) => user.id));
+      setSelectedUsers((prev) => Array.from(new Set([...prev, ...visibleIds])));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!user || selectedUsers.length === 0) return;
 
@@ -164,13 +188,57 @@ export default function CoachTrainingMenuPage() {
                     onClick={handleSelectAll}
                     className="text-xs md:text-sm md:text-base border-strava text-strava hover:bg-strava hover:text-white transition-colors"
                   >
-                    {selectedUsers.length === users.length
+                    {filteredUsers.length > 0 &&
+                    filteredUsers.every((currentUser) =>
+                      selectedUsers.includes(currentUser.id)
+                    )
                       ? "Deselect All"
                       : "Select All"}
                   </Button>
                 </div>
+
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Cari atlet"
+                      className="pl-9 text-sm md:text-base bg-white border-gray-300 text-gray-900 focus:border-strava focus:ring-strava"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {availableKelasOptions.map((kelas) => {
+                      const isActive = filterKelas === kelas;
+
+                      return (
+                        <Button
+                          key={kelas}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setFilterKelas((prev) => prev === kelas ? null : kelas)}
+                          className={isActive
+                            ? "text-xs md:text-sm md:text-base border-strava bg-strava text-white hover:bg-strava hover:text-white"
+                            : "text-xs md:text-sm md:text-base border-gray-300 text-gray-700 hover:border-strava/50 hover:text-strava"}
+                        >
+                          {kelas === "No-Race" ? "No Race" : `${kelas}K`}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="flex flex-wrap gap-2">
-                  {users.map((u) => (
+                  {filteredUsers.length === 0
+                    ? (
+                      <p className="text-sm text-gray-500">
+                        Tidak ada atlet pada filter ini.
+                      </p>
+                    )
+                    : filteredUsers.map((u) => (
                     <button
                       key={u.id}
                       type="button"
@@ -184,7 +252,10 @@ export default function CoachTrainingMenuPage() {
                         }
                       `}
                     >
-                      {u.username}
+                      {u.username}{" "}
+                      <span className="opacity-80">
+                        ({u.kelas === "No-Race" || !u.kelas ? "No Race" : `${u.kelas}K`})
+                      </span>
                     </button>
                   ))}
                 </div>

@@ -245,15 +245,15 @@ export default function AthletesPage() {
     setIsDeleting(true);
     try {
       const athleteIds = Array.from(selectedAthletes);
-      const deletePromises = [
-        supabase.from("training_log").delete().in("user_id", athleteIds),
-        supabase.from("training_assignments").delete().in(
-          "user_id",
-          athleteIds,
-        ),
-        supabase.from("users").delete().in("id", athleteIds),
-      ];
-      await Promise.all(deletePromises);
+      const res = await fetch("/api/delete-athletes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athleteIds }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete users");
+      }
       setAthletes((prev) =>
         prev.filter((athlete) => !selectedAthletes.has(athlete.id))
       );

@@ -59,10 +59,8 @@ export default function CoachDashboardPage() {
   const fetchCoachStats = async () => {
     if (!user) return
 
-    // Get total users
     const { data: usersData } = await supabase.from("users").select("id").eq("role", "user")
 
-    // Get active assignments (pending only)
     const { data: assignmentsData } = await supabase
       .from("training_assignments")
       .select("status, target_date")
@@ -73,8 +71,6 @@ export default function CoachDashboardPage() {
       (item) => item.status === "pending" && item.target_date >= today
     ).length || 0;
 
-    // Get completed activities within specific weekly range: 
-    // Monday 2 AM to Sunday 8 PM
     const now = new Date()
     const currentDay = now.getDay()
     const diffToMonday = (currentDay === 0 ? 6 : currentDay - 1)
@@ -83,7 +79,6 @@ export default function CoachDashboardPage() {
     monday.setDate(now.getDate() - diffToMonday)
     monday.setHours(2, 0, 0, 0)
 
-    // If it's Monday but before 2 AM, the current "training week" is last week's
     if (now < monday) {
       monday.setDate(monday.getDate() - 7)
     }
@@ -102,7 +97,6 @@ export default function CoachDashboardPage() {
       .gte("created_at", startRange)
       .lte("created_at", endRange)
 
-    // Get total distance from all users
     const { data: distanceData } = await supabase.from("training_log").select("distance").eq("status", "completed")
 
     const totalDistance = distanceData?.reduce((sum, log) => sum + log.distance, 0) || 0
@@ -111,12 +105,11 @@ export default function CoachDashboardPage() {
       totalUsers: usersData?.length || 0,
       activeAssignments: activeAssignmentsCount,
       completedThisWeek: completedData?.length || 0,
-      totalDistance: Math.round(totalDistance * 10) / 10, // Round to 1 decimal
+      totalDistance: Math.round(totalDistance * 10) / 10,
     })
   }
 
   const fetchUserActivities = async () => {
-    // Calculate weekly range: Monday 2 AM to Sunday 8 PM
     const now = new Date()
     const currentDay = now.getDay()
     const diffToMonday = (currentDay === 0 ? 6 : currentDay - 1)
@@ -136,7 +129,6 @@ export default function CoachDashboardPage() {
     const startRange = monday.toISOString()
     const endRange = sunday.toISOString()
 
-    // Fetch all completed training logs within the weekly range
     const { data: activitiesData } = await supabase
       .from("training_log")
       .select(`
@@ -164,7 +156,7 @@ export default function CoachDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-strava-dark">
+      <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 space-y-6">
           <h1 className="text-xl md:text-3xl font-bold text-strava">Coach Dashboard</h1>
           <div className="text-center py-8 text-strava">Loading Data...</div>
@@ -174,73 +166,71 @@ export default function CoachDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-3 py-6 space-y-2">
         <div>
           <h1 className="text-xl md:text-4xl font-bold text-strava">Coach Dashboard</h1>
-          <p className="text-xs text-strava-grey mt-0 mb-6">Overview of all your athletes and their progress</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-0 mb-6">Overview of all your athletes and their progress</p>
         </div>
 
-        {/* Clickable Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
           <Link href="/coach/athletes">
-            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
+            <Card className="bg-white text-gray-900 border border-gray-200 rounded-2xl cursor-pointer hover:border-strava/50 transition-all shadow-sm group">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Users className="h-8 w-8 text-white mb-2" />
+                  <Users className="h-8 w-8 text-strava mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.totalUsers}</p>
-                  <p className="text-white text-xs">Total Athletes</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Total Athletes</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/coach/active-assignments">
-            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
+            <Card className="bg-white text-gray-900 border border-gray-200 rounded-2xl cursor-pointer hover:border-strava/50 transition-all shadow-sm group">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Calendar className="h-8 w-8 text-white mb-2" />
+                  <Calendar className="h-8 w-8 text-strava mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.activeAssignments}</p>
-                  <p className="text-white text-xs">Active Assignments</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Active Assignments</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/coach/training-history">
-            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
+            <Card className="bg-white text-gray-900 border border-gray-200 rounded-2xl cursor-pointer hover:border-strava/50 transition-all shadow-sm group">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <Activity className="h-8 w-8 text-white mb-2" />
+                  <Activity className="h-8 w-8 text-strava mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.completedThisWeek}</p>
-                  <p className="text-white text-xs">Completed This Week</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Completed This Week</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/ranking">
-            <Card className="bg-strava text-white border-0 rounded-2xl cursor-pointer hover:bg-strava-grey transition-colors">
+            <Card className="bg-white text-gray-900 border border-gray-200 rounded-2xl cursor-pointer hover:border-strava/50 transition-all shadow-sm group">
               <CardContent className="p-4">
                 <div className="flex flex-col items-start">
-                  <TrendingUp className="h-8 w-8 text-white mb-2" />
+                  <TrendingUp className="h-8 w-8 text-strava mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-2xl md:text-3xl font-bold">{stats.totalDistance}</p>
-                  <p className="text-white text-xs">Total Distance (km)</p>
+                  <p className="text-gray-500 text-xs md:text-sm">Total Distance (km)</p>
                 </div>
               </CardContent>
             </Card>
           </Link>
         </div>
 
-        {/* User Activities */}
-        <Card className="bg-[#303030] rounded-2xl shadow-sm border border-none">
+        <Card className="bg-white rounded-2xl shadow-sm border border-gray-200 mt-4">
           <CardHeader>
-            <CardTitle className="text-xs font-semibold text-white">Recent User Activities</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-semibold text-gray-700">Recent User Activities</CardTitle>
           </CardHeader>
           <CardContent>
             {userActivities.length === 0 ? (
               <div className="text-center py-4">
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] md:text-sm text-gray-400">
                   Belum ada aktivitas di periode minggu ini.<br />
                   (Senin 02:00 - Minggu 20:00)
                 </p>
@@ -248,23 +238,23 @@ export default function CoachDashboardPage() {
             ) : (
               <div className="space-y-1">
                 {userActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-2 bg-strava-dark rounded-xl">
+                  <div key={activity.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-10 w-10 border border-gray-200">
                         <AvatarImage src={getSafeSrc(activity.user.profile_photo) || "/placeholder.svg"} />
-                        <AvatarFallback className="bg-white-500 text-white">
+                        <AvatarFallback className="bg-strava text-white">
                           {activity.user.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-small text-white text-xs">{activity.training_type}</p>
-                        <p className="text-[10px] text-gray-500">
+                        <p className="font-small text-gray-900 text-xs md:text-sm">{activity.training_type}</p>
+                        <p className="text-[10px] md:text-sm text-gray-500">
                           {activity.user.username} - {new Date(activity.date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-strava text-xs">{activity.distance} km</p>
+                      <p className="font-bold text-strava text-xs md:text-sm">{activity.distance} km</p>
                     </div>
                   </div>
                 ))}

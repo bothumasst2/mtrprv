@@ -40,7 +40,7 @@ interface AthleteActivity {
   distance: number;
   status: "completed" | "pending";
   strava_link: string | null;
-  assignment_id?: string; // ID dari training_assignments jika ada
+  assignment_id?: string;
   target_date?: string;
   assigned_date?: string;
   training_details?: string;
@@ -70,26 +70,21 @@ export default function AthletesPage() {
     ).eq("role", "user");
 
     if (data) {
-      // Get workout counts for each athlete from both tables
       const athletesWithStats = await Promise.all(
         data.map(async (athlete) => {
-          // Get completed workouts
           const { data: completedWorkouts } = await supabase
             .from("training_log")
             .select("id, date, status")
             .eq("user_id", athlete.id);
 
-          // Get assigned workouts with target_date
           const { data: assignedWorkouts } = await supabase
             .from("training_assignments")
             .select("id, date, target_date")
             .eq("user_id", athlete.id);
 
-          // Combine and get total count
           const totalActivities = (completedWorkouts?.length || 0) +
             (assignedWorkouts?.length || 0);
 
-          // Get the most recent activity date from both tables
           const allDates: string[] = [];
           if (completedWorkouts) {
             allDates.push(...completedWorkouts.map((w) => w.date));
@@ -119,22 +114,18 @@ export default function AthletesPage() {
   };
 
   const fetchAthleteActivities = async (athleteId: string) => {
-    // Fetch completed activities from training_log
     const { data: completedActivities } = await supabase
       .from("training_log")
       .select("*")
       .eq("user_id", athleteId);
 
-    // Fetch pending/missed activities from training_assignments
     const { data: assignedActivities } = await supabase
       .from("training_assignments")
       .select("*")
       .eq("user_id", athleteId);
 
-    // Combine both datasets
     const allActivities: AthleteActivity[] = [];
 
-    // Add completed activities
     if (completedActivities) {
       completedActivities.forEach((activity) => {
         let matchedAssignment = null;
@@ -159,7 +150,7 @@ export default function AthletesPage() {
           distance: activity.distance,
           status: "completed",
           strava_link: activity.strava_link,
-          assignment_id: activity.assignment_id, // Jika ada reference ke assignment
+          assignment_id: activity.assignment_id,
           target_date: matchedAssignment?.target_date || activity.date,
           assigned_date: matchedAssignment?.assigned_date,
           training_details: matchedAssignment?.training_details,
@@ -167,19 +158,14 @@ export default function AthletesPage() {
       });
     }
 
-    // Add assigned activities (pending/missed) yang belum dikerjakan
     if (assignedActivities) {
       assignedActivities.forEach((activity) => {
-        // Cek apakah assignment ini sudah dikerjakan dengan berbagai cara pencocokan
         const isCompleted = completedActivities?.some((completed) => {
-          // Method 1: Cocokkan berdasarkan assignment_id jika ada
           if (
             completed.assignment_id && completed.assignment_id === activity.id
           ) {
             return true;
           }
-
-          // Method 2: Cocokkan berdasarkan tanggal, tipe latihan, dan user
           const completedDate = new Date(completed.date).toDateString();
           const assignmentDate = new Date(activity.target_date || activity.date)
             .toDateString();
@@ -189,16 +175,12 @@ export default function AthletesPage() {
             completed.user_id === activity.user_id;
         });
 
-        // Jika belum dikerjakan, tambahkan sebagai pending (hanya yang belum lewat tanggal)
         if (!isCompleted) {
           const targetDate = new Date(activity.target_date || activity.date);
           const today = new Date();
-
-          // Set today to start of day to compare dates accurately
           today.setHours(0, 0, 0, 0);
           targetDate.setHours(0, 0, 0, 0);
 
-          // Hanya tampilkan yang pending (belum lewat tanggal), skip yang missed
           if (targetDate >= today) {
             allActivities.push({
               id: activity.id,
@@ -217,7 +199,6 @@ export default function AthletesPage() {
       });
     }
 
-    // Sort by date (most recent first)
     allActivities.sort((a: AthleteActivity, b: AthleteActivity) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
@@ -226,7 +207,7 @@ export default function AthletesPage() {
   };
 
   const handleAthleteClick = (athlete: Athlete) => {
-    if (isDeleteMode) return; // Don't allow click-through in delete mode
+    if (isDeleteMode) return;
     setSelectedAthlete(athlete);
     fetchAthleteActivities(athlete.id);
   };
@@ -238,7 +219,7 @@ export default function AthletesPage() {
 
   const handleDeleteModeToggle = () => {
     setIsDeleteMode(!isDeleteMode);
-    setSelectedAthletes(new Set()); // Clear selections when toggling mode
+    setSelectedAthletes(new Set());
   };
 
   const handleAthleteSelection = (athleteId: string, checked: boolean) => {
@@ -261,39 +242,26 @@ export default function AthletesPage() {
 
   const handleDeleteSelected = async () => {
     if (selectedAthletes.size === 0) return;
-
     setIsDeleting(true);
-
     try {
       const athleteIds = Array.from(selectedAthletes);
-
-      // Delete from all related tables first
       const deletePromises = [
-        // Delete training logs
         supabase.from("training_log").delete().in("user_id", athleteIds),
-        // Delete training assignments
         supabase.from("training_assignments").delete().in(
           "user_id",
           athleteIds,
         ),
-        // Delete users (this will cascade delete related data)
         supabase.from("users").delete().in("id", athleteIds),
       ];
-
       await Promise.all(deletePromises);
-
-      // Remove deleted athletes from local state
       setAthletes((prev) =>
         prev.filter((athlete) => !selectedAthletes.has(athlete.id))
       );
-
-      // Reset state
       setSelectedAthletes(new Set());
       setIsDeleteMode(false);
-
       toast({
         title: "Users Deleted",
-        description: `Successfully deleted ${athleteIds.length} user(s)`,
+        description: "Successfully deleted " + athleteIds.length + " user(s)",
       });
     } catch (error) {
       console.error("Error deleting users:", error);
@@ -318,14 +286,7 @@ export default function AthletesPage() {
       .delete()
       .eq("id", id);
 
-    if (error) {
-      console.error("Delete failed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete assignment.",
-        variant: "destructive",
-      });
-    } else {
+    if (!error) {
       if (selectedAthlete) {
         fetchAthleteActivities(selectedAthlete.id);
       }
@@ -334,12 +295,12 @@ export default function AthletesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1f1f1f]">
+      <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-white">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Athletes
           </h1>
-          <div className="text-white text-center py-8">Loading athletes...</div>
+          <div className="text-gray-500 text-center py-8">Loading athletes...</div>
         </div>
       </div>
     );
@@ -347,22 +308,22 @@ export default function AthletesPage() {
 
   if (selectedAthlete) {
     return (
-      <div className="min-h-screen bg-[#1f1f1f]">
+      <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 space-y-6">
-          <div className="text-orange-500 flex items-center gap-4">
-            <Button variant="ghost" onClick={handleBackToList} className="p-2">
+          <div className="text-strava flex items-center gap-4">
+            <Button variant="ghost" onClick={handleBackToList} className="p-2 hover:bg-gray-200">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-orange-500">
+              <h1 className="text-2xl md:text-3xl font-bold text-strava">
                 {selectedAthlete.username}
               </h1>
-              <p className="text-white text-sm">Activity History</p>
+              <p className="text-gray-600 text-sm md:text-base">Activity History</p>
             </div>
           </div>
-          <Card className="bg-strava-darkgrey rounded-xl shadow-sm border-none">
+          <Card className="bg-white rounded-xl shadow-sm border border-gray-200">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-white">
+              <CardTitle className="text-lg font-semibold text-gray-900">
                 Training Activities
               </CardTitle>
             </CardHeader>
@@ -370,8 +331,8 @@ export default function AthletesPage() {
               {athleteActivities.length === 0
                 ? (
                   <div className="text-center py-8">
-                    <Activity className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-600">
+                    <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">
                       No training activities found
                     </p>
                   </div>
@@ -381,28 +342,28 @@ export default function AthletesPage() {
                     {athleteActivities.map((activity) => (
                       <div
                         key={activity.id}
-                        className="bg-[#1f1f1f] border border-strava-darkgrey/40 rounded-xl p-4 flex flex-col gap-3"
+                        className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-3 hover:border-strava/30 transition-colors shadow-sm"
                       >
                         <div>
-                          <h3 className="font-bold text-strava text-sm uppercase tracking-wider">
+                          <h3 className="font-bold text-strava text-sm md:text-base uppercase tracking-wider">
                             {activity.training_type}
                           </h3>
                           <div
-                            className={`mt-2 inline-flex px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                            className={`mt-2 inline-flex px-3 py-1 rounded-full text-[10px] md:text-sm font-bold uppercase tracking-widest ${
                               activity.status === "completed"
-                                ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                                : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                                ? "bg-green-50 text-green-600 border border-green-200"
+                                : "bg-blue-50 text-blue-600 border border-blue-200"
                             }`}
                           >
                             {activity.status}
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center text-xs mt-2">
+                        <div className="flex justify-between items-center text-xs md:text-sm mt-2">
                           <div className="space-y-1 w-full">
-                            <div className="flex justify-between text-gray-400">
+                            <div className="flex justify-between text-gray-500">
                               <span>Target</span>
-                              <span className="font-bold text-white">
+                              <span className="font-bold text-gray-900">
                                 {activity.target_date
                                   ? new Date(activity.target_date)
                                     .toLocaleDateString("en-US", {
@@ -412,7 +373,7 @@ export default function AthletesPage() {
                                   : "-"}
                               </span>
                             </div>
-                            <div className="flex justify-between text-gray-500">
+                            <div className="flex justify-between text-gray-400">
                               <span>Assigned</span>
                               <span className="italic">
                                 {activity.assigned_date
@@ -428,17 +389,17 @@ export default function AthletesPage() {
                         </div>
 
                         {activity.training_details && (
-                          <div className="mt-2 p-3 bg-strava-dark/30 rounded-lg border border-strava-darkgrey/20">
-                            <p className="text-xs text-gray-400 leading-relaxed italic">
+                          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed italic">
                               {activity.training_details}
                             </p>
                           </div>
                         )}
 
                         <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs md:text-sm text-gray-500">
                             {activity.status === "completed"
-                              ? `Distance: ${activity.distance}km`
+                              ? "Distance: " + activity.distance + "km"
                               : ""}
                           </span>
                           {activity.status === "completed" &&
@@ -447,7 +408,7 @@ export default function AthletesPage() {
                               href={activity.strava_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-strava hover:underline font-medium"
+                              className="text-xs md:text-sm text-strava hover:underline font-medium"
                             >
                               View Strava
                             </a>
@@ -458,7 +419,7 @@ export default function AthletesPage() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            className="w-full mt-2 font-bold bg-red-500 hover:bg-red-600 text-white rounded-xl h-10"
+                            className="w-full mt-2 font-bold rounded-xl h-10"
                             onClick={() => handleDeleteAssignment(activity.id)}
                           >
                             Delete
@@ -476,19 +437,18 @@ export default function AthletesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1f1f1f]">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-orange-500">
+            <h1 className="text-2xl md:text-3xl font-bold text-strava">
               Athletes
             </h1>
-            <p className="text-xs text-white mt-1">
+            <p className="text-xs md:text-sm text-gray-600 mt-1">
               Manage and view your athletes progress
             </p>
           </div>
 
-          {/* Delete Mode Controls */}
           <div className="flex items-center gap-4">
             {isDeleteMode && (
               <div className="flex items-center gap-4">
@@ -499,7 +459,7 @@ export default function AthletesPage() {
                       selectedAthletes.size === athletes.length}
                     onCheckedChange={handleSelectAll}
                   />
-                  <label htmlFor="select-all" className="text-sm text-white">
+                  <label htmlFor="select-all" className="text-sm md:text-base text-gray-900">
                     Select All ({selectedAthletes.size}/{athletes.length})
                   </label>
                 </div>
@@ -515,13 +475,13 @@ export default function AthletesPage() {
                         <Trash2 className="h-4 w-4" />
                         {isDeleting
                           ? "Deleting..."
-                          : `Delete Selected (${selectedAthletes.size})`}
+                          : "Delete Selected (" + selectedAthletes.size + ")"}
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="bg-white border-gray-200">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogTitle className="text-gray-900">Confirm Deletion</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-600">
                           Are you sure you want to delete{" "}
                           {selectedAthletes.size}{" "}
                           user(s)? This action cannot be undone and will remove
@@ -529,7 +489,7 @@ export default function AthletesPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="bg-gray-100 text-gray-900">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteSelected}
                           className="bg-red-600 hover:bg-red-700"
@@ -547,8 +507,8 @@ export default function AthletesPage() {
               variant={isDeleteMode ? "outline" : "default"}
               onClick={handleDeleteModeToggle}
               className={isDeleteMode
-                ? "border-white text-gray-500 hover:bg-strava hover:text-gray-900"
-                : ""}
+                ? "border-gray-200 text-gray-600 hover:bg-gray-100"
+                : "bg-strava hover:bg-strava-light text-white"}
             >
               {isDeleteMode ? "Cancel" : "Delete Users"}
             </Button>
@@ -557,10 +517,10 @@ export default function AthletesPage() {
 
         {athletes.length === 0
           ? (
-            <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <Card className="bg-white rounded-2xl shadow-sm border border-gray-200">
               <CardContent className="p-8 text-center">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   No Athletes Found
                 </h3>
                 <p className="text-gray-600">
@@ -570,14 +530,14 @@ export default function AthletesPage() {
             </Card>
           )
           : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {athletes.map((athlete) => (
                 <Card
                   key={athlete.id}
-                  className={`bg-strava-darkgrey rounded-xl shadow-sm border border-none transition-all ${
+                  className={`bg-white rounded-xl shadow-sm border border-gray-200 transition-all ${
                     isDeleteMode
-                      ? "cursor-default hover:bg-strava"
-                      : "cursor-pointer hover:bg-strava hover:shadow-md"
+                      ? "cursor-default"
+                      : "cursor-pointer hover:border-strava/50 hover:shadow-md"
                   } ${
                     selectedAthletes.has(athlete.id)
                       ? "ring-2 ring-red-500"
@@ -600,34 +560,34 @@ export default function AthletesPage() {
                         />
                       )}
 
-                      <Avatar className="h-12 w-12">
+                      <Avatar className="h-12 w-12 border border-gray-100">
                         <AvatarImage
                           src={getSafeSrc(athlete.profile_photo) ||
                             "/placeholder.svg"}
                         />
-                        <AvatarFallback className="bg-orange-500 text-white">
+                        <AvatarFallback className="bg-strava text-white">
                           {athlete.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1">
-                        <h3 className="font-semibold text-white">
+                        <h3 className="font-semibold text-gray-900">
                           {athlete.username}
                         </h3>
-                        <p className="text-sm text-gray-400">{athlete.email}</p>
+                        <p className="text-sm md:text-base text-gray-500">{athlete.email}</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm md:text-base mt-4">
                       <div>
-                        <p className="text-gray-400">Total Workouts</p>
-                        <p className="text-lg font-bold text-white">
+                        <p className="text-gray-500">Total Workouts</p>
+                        <p className="text-lg font-bold text-gray-900">
                           {athlete.total_workouts}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-400">Last Activity</p>
-                        <p className="font-medium text-white">
+                        <p className="text-gray-500">Last Activity</p>
+                        <p className="font-medium text-gray-900">
                           {athlete.last_activity
                             ? new Date(athlete.last_activity)
                               .toLocaleDateString()

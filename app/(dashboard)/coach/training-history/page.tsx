@@ -33,7 +33,6 @@ export default function CoachTrainingHistoryPage() {
   }, [])
 
   const fetchTrainingHistory = async () => {
-    // Get all training logs with user information, sorted by most recent first
     const { data } = await supabase
       .from("training_log")
       .select(`
@@ -68,35 +67,21 @@ export default function CoachTrainingHistoryPage() {
   }
 
   const handleDeleteTraining = async (id: string) => {
-    // Show confirmation dialog
     const isConfirmed = window.confirm("Yakin mau delete training ini? Data akan terhapus permanen!")
-
-    if (!isConfirmed) {
-      return // User cancelled
-    }
-
-    // Set loading state for this specific item
+    if (!isConfirmed) return
     setDeletingId(id)
-
     try {
-      // Delete from Supabase training_log table
       const { error } = await supabase
         .from("training_log")
         .delete()
         .eq("id", id)
-
       if (error) {
         console.error("Error deleting training:", error)
         alert("Gagal delete training record: " + error.message)
         return
       }
-
-      // Remove from local state immediately for better UX
       setTrainingHistory(prev => prev.filter(item => item.id !== id))
-
-      // Show success message
       alert("Training berhasil dihapus!")
-
     } catch (error) {
       console.error("Error deleting training:", error)
       alert("Gagal delete training record")
@@ -107,50 +92,50 @@ export default function CoachTrainingHistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-strava-dark">
+      <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 space-y-6">
           <h1 className="text-2xl md:text-3xl font-bold text-strava">Training History</h1>
-          <div className="text-white text-center py-8">Loading training history...</div>
+          <div className="text-center py-8 text-strava">Loading training history...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-strava-dark">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-strava">Training History</h1>
-          <p className="text-sm text-gray-600 mt-1">All athletes' training activities</p>
+          <p className="text-sm md:text-base text-gray-600 mt-1">All athletes' training activities</p>
         </div>
 
-        <Card className="bg-[#1f1f1f] rounded-lg shadow-sm border border-none">
+        <Card className="bg-white rounded-lg shadow-sm border border-gray-200">
           <CardHeader>
-            <CardTitle className="text-xs font-semibold text-gray-400">Recent Training Activities</CardTitle>
+            <CardTitle className="text-xs md:text-sm md:text-base font-semibold text-gray-500">Recent Training Activities</CardTitle>
           </CardHeader>
           <CardContent>
             {trainingHistory.length === 0 ? (
               <div className="text-center py-8">
-                <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No training activities found</p>
+                <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-400">No training activities found</p>
               </div>
             ) : (
               <div className="space-y-1.5">
                 {trainingHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-3 bg-strava-dark rounded-xl text-white"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-strava/20"
                   >
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-10 w-10 border border-gray-200">
                         <AvatarImage src={getSafeSrc(item.user.profile_photo) || "/placeholder.svg"} />
                         <AvatarFallback className="bg-strava text-white">
                           {item.user.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="px-2 text-sm font-small">{item.training_type}</p>
-                        <p className="px-2 text-xs text-gray-400">
+                        <p className="px-2 text-sm md:text-base font-medium text-gray-900">{item.training_type}</p>
+                        <p className="px-2 text-xs md:text-sm md:text-base text-gray-500">
                           {item.user.username} - {item.distance}km - {new Date(item.date).toLocaleDateString()}
                         </p>
                       </div>
@@ -162,7 +147,7 @@ export default function CoachTrainingHistoryPage() {
                           href={item.strava_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-strava text-xs hover:text-strava"
+                          className="text-strava text-xs md:text-sm md:text-base hover:underline font-medium"
                         >
                           Details
                         </a>
@@ -171,11 +156,11 @@ export default function CoachTrainingHistoryPage() {
                       <button
                         onClick={() => handleDeleteTraining(item.id)}
                         disabled={deletingId === item.id}
-                        className="p-2 text-strava-light hover:text-strava hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                         title="Delete training record"
                       >
                         {deletingId === item.id ? (
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent"></div>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
                         ) : (
                           <Trash2 className="h-4 w-4" />
                         )}

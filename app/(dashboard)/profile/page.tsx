@@ -8,10 +8,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle, XCircle, Edit, Camera } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { CheckCircle, XCircle, Edit, Camera, Plus, Trash2, Check, Pencil } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
 import { useProfile } from "@/contexts/profile-context"
+import { useUserRole } from "@/hooks/use-user-role"
 import { ImageCropper } from "@/components/image-cropper"
 
 function getSafeSrc(src: string | null | undefined) {
@@ -32,6 +43,14 @@ interface TrainingHistory {
   status: "completed" | "pending" | "missed"
 }
 
+interface KelasItem {
+  id: string
+  name: string
+  sort_order: number
+}
+
+const KELAS_OPTIONS = ["42", "21", "10", "No-Race"] as const
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile>({
     username: "",
@@ -47,13 +66,33 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
   const { profilePhoto, updateProfilePhoto } = useProfile()
+  const { role } = useUserRole()
+  const isCoachOrAdmin = role === "coach" || role === "admin"
+
+  // Kelas management state
+  const [kelasList, setKelasList] = useState<KelasItem[]>([])
+  const [isAddKelasOpen, setIsAddKelasOpen] = useState(false)
+  const [newKelasName, setNewKelasName] = useState("")
+  const [addingKelas, setAddingKelas] = useState(false)
+
+  // Edit kelas state
+  const [editingKelasId, setEditingKelasId] = useState<string | null>(null)
+  const [editingKelasName, setEditingKelasName] = useState("")
+  const [savingKelasId, setSavingKelasId] = useState<string | null>(null)
+
+  // Delete kelas state
+  const [showDeleteKelasConfirm, setShowDeleteKelasConfirm] = useState<string | null>(null)
+  const [deletingKelasId, setDeletingKelasId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
       fetchProfile()
       fetchTrainingHistory()
+      if (isCoachOrAdmin) {
+        fetchKelas()
+      }
     }
-  }, [user])
+  }, [user, isCoachOrAdmin])
 
   const fetchProfile = async () => {
     if (!user) return
@@ -97,6 +136,14 @@ export default function ProfilePage() {
       .order("created_at", { ascending: false })
 
     setTrainingHistory(data || [])
+  }
+
+  const fetchKelas = async () => {
+    const { data } = await supabase
+      .from("kelas")
+      .select("*")
+      .order("sort_order", { ascending: true })
+    setKelasList(data || [])
   }
 
   const updateProfile = async () => {
@@ -146,9 +193,8 @@ export default function ProfilePage() {
     try {
       const fileExt = croppedFile.name.split(".").pop() || "jpg"
       const fileName = `profile-${Date.now()}.${fileExt}`
-      const filePath = `${user.id}/${fileName}` // Organize by userId
+      const filePath = `${user.id}/${fileName}`
 
-      // Upload to user-specific folder
       const { error: uploadError } = await supabase.storage
         .from("profile-photos")
         .upload(filePath, croppedFile, { upsert: true })
@@ -158,10 +204,8 @@ export default function ProfilePage() {
         return
       }
 
-      // Get public URL
       const { data } = supabase.storage.from("profile-photos").getPublicUrl(filePath)
 
-      // Update profile photo in database
       const { error: updateError } = await supabase
         .from("users")
         .update({ profile_photo: data.publicUrl })
@@ -169,7 +213,7 @@ export default function ProfilePage() {
 
       if (!updateError) {
         setProfile((prev) => ({ ...prev, profile_photo: data.publicUrl }))
-        updateProfilePhoto(data.publicUrl) // Update global profile photo
+        updateProfilePhoto(data.publicUrl)
       }
     } catch (error) {
       console.error("Error uploading photo:", error)
@@ -192,6 +236,51 @@ export default function ProfilePage() {
     }
   }
 
+  // Kelas CRUD handlers
+  const handleAddKelas = async () => {
+    if (!newKelasName.trim()) return
+    setAddingKelas(true)
+    const maxOrder = kelasList.reduce((max, k) => Math.max(max, k.sort_order), 0)
+    const { error } = await supabase.from("kelas").insert({
+      name: newKelasName.trim(),
+      sort_order: maxOrder + 1,
+    })
+    if (!error) {
+      setNewKelasName("")
+      setIsAddKelasOpen(false)
+      fetchKelas()
+    }
+    setAddingKelas(false)
+  }
+
+  const handleEditKelas = async (kelasId: string) => {
+    if (!editingKelasName.trim()) {
+      setEditingKelasId(null)
+      return
+    }
+    setSavingKelasId(kelasId)
+    const { error } = await supabase
+      .from("kelas")
+      .update({ name: editingKelasName.trim() })
+      .eq("id", kelasId)
+    if (!error) {
+      setEditingKelasId(null)
+      setEditingKelasName("")
+      fetchKelas()
+    }
+    setSavingKelasId(null)
+  }
+
+  const handleDeleteKelas = async (kelasId: string) => {
+    setDeletingKelasId(kelasId)
+    const { error } = await supabase.from("kelas").delete().eq("id", kelasId)
+    if (!error) {
+      setShowDeleteKelasConfirm(null)
+      fetchKelas()
+    }
+    setDeletingKelasId(null)
+  }
+
   return (
     <div className="min-h-screen bg-strava-dark">
       <div className="container mx-auto px-4 py-6 space-y-6">
@@ -200,7 +289,7 @@ export default function ProfilePage() {
         <Card className="bg-[#1f1f1f] rounded-lg shadow-sm border border-none relative">
           <Button
             variant="ghost"
-            size="md"
+            size="sm"
             onClick={() => setIsEditing(!isEditing)}
             className="absolute top-5 right-4 p-2 hover:bg-white"
           >
@@ -284,6 +373,168 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Kelas Management - Coach/Admin only */}
+        {isCoachOrAdmin && (
+          <Card className="bg-[#1f1f1f] rounded-lg shadow-sm border border-none">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-semibold text-white">Kelas Management</CardTitle>
+              <Button
+                size="sm"
+                onClick={() => setIsAddKelasOpen(true)}
+                className="bg-strava hover:bg-strava-light text-white rounded-lg h-8 px-3 text-xs font-bold"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add Kelas
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {kelasList.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No classes defined yet. Add your first class.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {kelasList.map((kelas) => (
+                    <div
+                      key={kelas.id}
+                      className="flex items-center justify-between bg-[#2a2a2a] rounded-lg px-4 py-3"
+                    >
+                      {editingKelasId === kelas.id ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={editingKelasName}
+                            onChange={(e) => setEditingKelasName(e.target.value)}
+                            className="h-8 text-sm bg-[#1f1f1f] border-gray-600 text-white"
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditKelas(kelas.id)}
+                            disabled={savingKelasId === kelas.id}
+                            className="text-green-400 hover:text-green-300 h-8 px-2"
+                          >
+                            {savingKelasId === kelas.id ? (
+                              <span className="text-xs">...</span>
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingKelasId(null)}
+                            className="text-gray-400 hover:text-gray-300 h-8 px-2"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <span className="text-white font-bold text-sm">
+                              {kelas.name}
+                            </span>
+                            <span className="text-[10px] text-gray-500">
+                              Urutan: {kelas.sort_order}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingKelasId(kelas.id)
+                                setEditingKelasName(kelas.name)
+                              }}
+                              className="text-gray-400 hover:text-strava h-8 px-2"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setShowDeleteKelasConfirm(kelas.id)}
+                              className="text-gray-400 hover:text-red-400 h-8 px-2"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+
+            {/* Add Kelas Dialog */}
+            <AlertDialog open={isAddKelasOpen} onOpenChange={setIsAddKelasOpen}>
+              <AlertDialogContent className="max-w-[85vw] rounded-2xl border border-slate-200 bg-[#1f1f1f] md:max-w-sm">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-lg font-bold text-white">
+                    Tambah Kelas Baru
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-xs leading-relaxed text-gray-400">
+                    Masukkan nama kelas baru (contoh: 42, 21, 10, No-Race).
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  value={newKelasName}
+                  onChange={(e) => setNewKelasName(e.target.value)}
+                  placeholder="Nama kelas"
+                  className="bg-[#2a2a2a] border-gray-600 text-white"
+                  autoFocus
+                />
+                <AlertDialogFooter className="gap-2 mt-4">
+                  <AlertDialogCancel className="rounded-xl font-bold text-xs">
+                    Batal
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleAddKelas}
+                    disabled={addingKelas || !newKelasName.trim()}
+                    className="bg-strava hover:bg-strava-light text-white rounded-xl font-bold px-4 h-9 text-xs"
+                  >
+                    {addingKelas ? "Menambahkan..." : "Tambah"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Kelas Confirmation */}
+            <AlertDialog
+              open={!!showDeleteKelasConfirm}
+              onOpenChange={(open) => !open && setShowDeleteKelasConfirm(null)}
+            >
+              <AlertDialogContent className="max-w-[85vw] rounded-2xl border border-slate-200 bg-[#1f1f1f] md:max-w-sm">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-lg font-bold text-red-400">
+                    Hapus Kelas?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-xs leading-relaxed text-gray-400">
+                    Kelas akan dihapus permanen. Athlete yang menggunakan kelas ini
+                    akan tetap ada, tapi kelasnya akan dihapus.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2 mt-4">
+                  <AlertDialogCancel className="rounded-xl font-bold text-xs">
+                    Batal
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() =>
+                      showDeleteKelasConfirm && handleDeleteKelas(showDeleteKelasConfirm)
+                    }
+                    disabled={deletingKelasId === showDeleteKelasConfirm}
+                    className="bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold px-4 h-9 text-xs"
+                  >
+                    {deletingKelasId === showDeleteKelasConfirm ? "Menghapus..." : "Hapus"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </Card>
+        )}
 
         <Card className="bg-strava-darkgrey rounded-lg shadow-sm border border-none">
           <CardHeader>

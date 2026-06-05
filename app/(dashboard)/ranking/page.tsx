@@ -3,8 +3,22 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Trophy, Medal, Award } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Trophy, Medal, Award, RotateCcw } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/contexts/auth-context"
+import { useUserRole } from "@/hooks/use-user-role"
+import { resetRanking } from "@/actions/coach"
 
 function getSafeSrc(src: string | null | undefined) {
   return src && src.trim().length > 0 ? src : undefined
@@ -29,17 +43,37 @@ export default function RankingPage() {
     "No-Race": [],
   })
   const [loading, setLoading] = useState(true)
+  const [cutoffDate, setCutoffDate] = useState<string | null>(null)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [resetting, setResetting] = useState(false)
+
+  const { user } = useAuth()
+  const { role } = useUserRole()
+  const isCoachOrAdmin = role === "coach" || role === "admin"
 
   useEffect(() => {
     fetchRankings()
   }, [])
 
   const fetchRankings = async () => {
+    // Fetch cutoff date
+    const { data: resetData } = await supabase
+      .from("ranking_reset")
+      .select("cutoff_at")
+      .single()
+
+    let cutoff = null
+    if (resetData?.cutoff_at) {
+      cutoff = resetData.cutoff_at
+      setCutoffDate(cutoff)
+    }
+
     // User IDs to exclude from ranking
     const excludedUserIds = ["7f52c19e-c17a-4289-9812-f42aff30374c"]
 
-    // Get ALL completed training logs (no date filter for accumulated total)
-    const { data } = await supabase
+    // Build query — filter by cutoff date if reset has been performed
+    // Reset does NOT delete training_log; it only changes the ranking period start
+    let query = supabase
       .from("training_log")
       .select(`
         user_id,
@@ -52,6 +86,12 @@ export default function RankingPage() {
         )
       `)
       .eq("status", "completed")
+
+    if (cutoff) {
+      query = query.gte("date", cutoff)
+    }
+
+    const { data } = await query
 
     if (data) {
       const userDistances = new Map<string, { user: any; totalDistance: number }>()
@@ -97,6 +137,22 @@ export default function RankingPage() {
     setLoading(false)
   }
 
+  const handleReset = async () => {
+    if (!user) return
+    setResetting(true)
+
+    const formData = new FormData()
+    formData.append("user_id", user.id)
+    const result = await resetRanking(formData)
+
+    if (result.success) {
+      setShowResetConfirm(false)
+      await fetchRankings()
+    }
+
+    setResetting(false)
+  }
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
@@ -134,9 +190,8 @@ export default function RankingPage() {
     )
   }
 
-  const visibleKelas = RANKING_KELAS.filter(
-    (kelas) => (rankingsByKelas[kelas] || []).length > 0,
-  )
+  const visibleKelas = RANKING_KELAS
+  // Always show all classes — even with no data, user can see empty state
 
   const RankingList = ({ title, data }: { title: string; data: RankingUser[] }) => (
     <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-1">
@@ -182,21 +237,74 @@ export default function RankingPage() {
   return (
     <div className="min-h-screen bg-[#1f1f1f]">
       <div className="container mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-xl md:text-3xl font-bold text-strava">Ranking</h1>
-          <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance per class</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold text-strava">Ranking</h1>
+            <p className="text-xs text-gray-400 mt-1">All-time ranking based on total accumulated distance per class</p>
+            {cutoffDate && (
+              <p className="mt-1 text-[10px] text-gray-500 font-medium">
+                Periode sejak{" "}
+                <span className="font-bold text-gray-400">
+                  {new Date(cutoffDate).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </p>
+            )}
+          </div>
+
+          {isCoachOrAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowResetConfirm(true)}
+              className="h-8 rounded-xl px-3 text-xs font-black border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {visibleKelas.map((kelas) => (
             <RankingList
               key={kelas}
-              title={kelas === "No-Race" ? "No Race" : `${kelas}K`}
+              title={kelas}
               data={rankingsByKelas[kelas] || []}
             />
           ))}
         </div>
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <AlertDialogContent className="max-w-[85vw] rounded-2xl border border-slate-200 bg-[#1f1f1f] md:max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-bold text-red-400">
+              Reset Ranking?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs leading-relaxed text-gray-400">
+              Semua akumulasi jarak akan di-reset ke 0. Data training historis tidak akan dihapus.
+              Ranking akan mulai menghitung dari sekarang.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl font-bold text-xs">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReset}
+              disabled={resetting}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold px-4 h-9 text-xs"
+            >
+              {resetting ? "Me-reset..." : "Reset"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

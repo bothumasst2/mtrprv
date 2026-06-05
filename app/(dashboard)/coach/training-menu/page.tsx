@@ -38,7 +38,10 @@ interface User {
   kelas: string | null;
 }
 
-const KELAS_OPTIONS = ["42", "21", "10", "No-Race"] as const;
+interface KelasItem {
+  id: string;
+  name: string;
+}
 
 const TRAINING_TYPES = [
   "EASY RUN ZONA 2",
@@ -64,11 +67,21 @@ export default function CoachTrainingMenuPage() {
   const [successCount, setSuccessCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterKelas, setFilterKelas] = useState<string | null>(null);
+  const [kelasList, setKelasList] = useState<KelasItem[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchUsers();
+    fetchKelas();
   }, []);
+
+  const fetchKelas = async () => {
+    const { data } = await supabase
+      .from("kelas")
+      .select("id, name")
+      .order("sort_order", { ascending: true });
+    setKelasList(data || []);
+  };
 
   const fetchUsers = async () => {
     const { data } = await supabase
@@ -90,9 +103,7 @@ export default function CoachTrainingMenuPage() {
     return matchesSearch && matchesKelas;
   });
 
-  const availableKelasOptions = KELAS_OPTIONS.filter((kelas) =>
-    users.some((currentUser) => String(currentUser.kelas || "No-Race") === kelas)
-  );
+  const availableKelasOptions = kelasList
 
   const handleUserToggle = (userId: string) => {
     setSelectedUsers((prev) =>
@@ -210,21 +221,21 @@ export default function CoachTrainingMenuPage() {
 
                   <div className="flex flex-wrap gap-2">
                     {availableKelasOptions.map((kelas) => {
-                      const isActive = filterKelas === kelas;
+                      const isActive = filterKelas === kelas.name;
 
                       return (
                         <Button
-                          key={kelas}
+                          key={kelas.id}
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            setFilterKelas((prev) => prev === kelas ? null : kelas)}
+                            setFilterKelas((prev) => prev === kelas.name ? null : kelas.name)}
                           className={isActive
                             ? "text-xs md:text-sm md:text-base border-strava bg-strava text-white hover:bg-strava hover:text-white"
                             : "text-xs md:text-sm md:text-base border-gray-300 text-gray-700 hover:border-strava/50 hover:text-strava"}
                         >
-                          {kelas === "No-Race" ? "No Race" : `${kelas}K`}
+                          {kelas.name}
                         </Button>
                       );
                     })}
@@ -254,7 +265,7 @@ export default function CoachTrainingMenuPage() {
                     >
                       {u.username}{" "}
                       <span className="opacity-80">
-                        ({u.kelas === "No-Race" || !u.kelas ? "No Race" : `${u.kelas}K`})
+                        ({u.kelas || "No-Race"})
                       </span>
                     </button>
                   ))}

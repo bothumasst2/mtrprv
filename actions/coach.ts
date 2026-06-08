@@ -36,7 +36,7 @@ export async function createAthlete(formData: FormData) {
   const password = formData.get("password") as string
   const username = formData.get("username") as string
   const role = formData.get("role") as string
-  const kelas = formData.get("kelas") as string
+  const kelasId = formData.get("kelas_id") as string
 
   if (!email || !password) {
     return { error: "Email and password are required" }
@@ -80,7 +80,7 @@ export async function createAthlete(formData: FormData) {
         username: username || email.split("@")[0],
         profile_photo: null,
         strava_link: null,
-        kelas: kelas || "No-Race",
+        kelas_id: kelasId || null,
         role: role || "user",
       })
 

@@ -35,7 +35,7 @@ interface User {
   id: string;
   username: string;
   email: string;
-  kelas: string | null;
+  kelas_id: string | null;
 }
 
 interface KelasItem {
@@ -86,7 +86,7 @@ export default function CoachTrainingMenuPage() {
   const fetchUsers = async () => {
     const { data } = await supabase
       .from("users")
-      .select("id, username, email, kelas")
+      .select("id, username, email, kelas_id")
       .eq("role", "user")
       .order("username", { ascending: true });
     setUsers(data || []);
@@ -96,8 +96,9 @@ export default function CoachTrainingMenuPage() {
     const matchesSearch = currentUser.username.toLowerCase().includes(
       searchQuery.toLowerCase(),
     );
+    const currentKelasName = kelasList.find((k) => k.id === currentUser.kelas_id)?.name || "No-Race";
     const matchesKelas = filterKelas
-      ? String(currentUser.kelas || "No-Race") === filterKelas
+      ? currentKelasName === filterKelas
       : true;
 
     return matchesSearch && matchesKelas;
@@ -265,7 +266,7 @@ export default function CoachTrainingMenuPage() {
                     >
                       {u.username}{" "}
                       <span className="opacity-80">
-                        ({u.kelas || "No-Race"})
+                        ({kelasList.find((k) => k.id === u.kelas_id)?.name || "No-Race"})
                       </span>
                     </button>
                   ))}

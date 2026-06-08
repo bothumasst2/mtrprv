@@ -49,8 +49,6 @@ interface KelasItem {
   sort_order: number
 }
 
-const KELAS_OPTIONS = ["42", "21", "10", "No-Race"] as const
-
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile>({
     username: "",
@@ -112,7 +110,7 @@ export default function ProfilePage() {
         username: user.email?.split("@")[0] || "User",
         profile_photo: null,
         strava_link: null,
-        kelas: "No-Race",
+        kelas_id: null,
       })
 
       if (!error) {

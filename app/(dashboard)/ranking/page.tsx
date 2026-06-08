@@ -30,18 +30,19 @@ interface RankingUser {
   profile_photo: string | null
   total_distance: number
   rank: number
-  kelas: string | null
+  kelas_id: string | null
+  kelas_name: string
 }
 
-const RANKING_KELAS = ["42", "21", "10", "No-Race"] as const
+interface KelasGroup {
+  id: string
+  name: string
+  sort_order: number
+}
 
 export default function RankingPage() {
-  const [rankingsByKelas, setRankingsByKelas] = useState<Record<string, RankingUser[]>>({
-    "42": [],
-    "21": [],
-    "10": [],
-    "No-Race": [],
-  })
+  const [rankingsByKelas, setRankingsByKelas] = useState<Record<string, RankingUser[]>>({})
+  const [kelasGroups, setKelasGroups] = useState<KelasGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [cutoffDate, setCutoffDate] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -56,6 +57,20 @@ export default function RankingPage() {
   }, [])
 
   const fetchRankings = async () => {
+    // Fetch all kelas groups
+    const { data: kelasData } = await supabase
+      .from("kelas")
+      .select("id, name, sort_order")
+      .order("sort_order", { ascending: true })
+
+    const kelasList = kelasData || []
+    setKelasGroups(kelasList)
+
+    // Pre-fill empty mapping for all kelas
+    const emptyMap: Record<string, RankingUser[]> = {}
+    kelasList.forEach((k) => { emptyMap[k.name] = [] })
+    emptyMap["No-Race"] = [] // fallback for unassigned
+
     // Fetch cutoff date
     const { data: resetData } = await supabase
       .from("ranking_reset")
@@ -82,7 +97,7 @@ export default function RankingPage() {
           id,
           username,
           profile_photo,
-          kelas
+          kelas_id
         )
       `)
       .eq("status", "completed")
@@ -114,23 +129,33 @@ export default function RankingPage() {
         }
       })
 
+      // Build kelas_id → kelas_name lookup
+      const kelasNameMap = new Map<string, string>()
+      kelasList.forEach((k) => kelasNameMap.set(k.id, k.name))
+
       const allRankings = Array.from(userDistances.entries())
         .map(([userId, data], index) => ({
           id: userId,
           username: data.user.username,
           profile_photo: data.user.profile_photo,
-          kelas: data.user.kelas,
+          kelas_id: data.user.kelas_id,
+          kelas_name: kelasNameMap.get(data.user.kelas_id) || "No-Race",
           total_distance: data.totalDistance,
           rank: index + 1,
         }))
 
-      const nextRankings = RANKING_KELAS.reduce<Record<string, RankingUser[]>>((acc, kelas) => {
-        acc[kelas] = allRankings
-          .filter((user) => String(user.kelas || "No-Race") === kelas)
-          .sort((a, b) => b.total_distance - a.total_distance)
-          .map((user, index) => ({ ...user, rank: index + 1 }))
-        return acc
-      }, {})
+      // Group by kelas_name
+      const nextRankings = { ...emptyMap }
+      allRankings.forEach((user) => {
+        const group = user.kelas_name
+        if (!nextRankings[group]) nextRankings[group] = []
+        nextRankings[group].push(user)
+      })
+      // Sort each group
+      Object.keys(nextRankings).forEach((key) => {
+        nextRankings[key].sort((a, b) => b.total_distance - a.total_distance)
+        nextRankings[key] = nextRankings[key].map((user, index) => ({ ...user, rank: index + 1 }))
+      })
 
       setRankingsByKelas(nextRankings)
     }
@@ -190,8 +215,11 @@ export default function RankingPage() {
     )
   }
 
-  const visibleKelas = RANKING_KELAS
-  // Always show all classes — even with no data, user can see empty state
+  // Dynamic kelas — fetch from DB; always include "No-Race" fallback
+  const visibleKelas = [
+    ...kelasGroups.map((k) => k.name),
+    ...(kelasGroups.some((k) => k.name === "No-Race") ? [] : ["No-Race"]),
+  ]
 
   const RankingList = ({ title, data }: { title: string; data: RankingUser[] }) => (
     <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-1">

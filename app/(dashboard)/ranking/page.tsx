@@ -69,7 +69,6 @@ export default function RankingPage() {
     // Pre-fill empty mapping for all kelas
     const emptyMap: Record<string, RankingUser[]> = {}
     kelasList.forEach((k) => { emptyMap[k.name] = [] })
-    emptyMap["No-Race"] = [] // fallback for unassigned
 
     // Fetch cutoff date
     const { data: resetData } = await supabase
@@ -85,6 +84,17 @@ export default function RankingPage() {
 
     // User IDs to exclude from ranking
     const excludedUserIds = ["7f52c19e-c17a-4289-9812-f42aff30374c"]
+
+    // Fetch all users — seed 0 km so athletes with no training still show in ranking
+    const { data: allUsers } = await supabase
+      .from("users")
+      .select("id, username, profile_photo, kelas_id")
+
+    const userDistances = new Map<string, { user: any; totalDistance: number }>()
+    ;(allUsers || []).forEach((u: any) => {
+      if (excludedUserIds.includes(u.id)) return
+      userDistances.set(u.id, { user: u, totalDistance: 0 })
+    })
 
     // Build query — filter by cutoff date if reset has been performed
     // Reset does NOT delete training_log; it only changes the ranking period start
@@ -109,8 +119,6 @@ export default function RankingPage() {
     const { data } = await query
 
     if (data) {
-      const userDistances = new Map<string, { user: any; totalDistance: number }>()
-
       data.forEach((log: any) => {
         const userId = log.user_id
 
@@ -118,15 +126,10 @@ export default function RankingPage() {
         if (excludedUserIds.includes(userId)) return
 
         const existing = userDistances.get(userId)
-
         if (existing) {
           existing.totalDistance += log.distance
-        } else {
-          userDistances.set(userId, {
-            user: log.users,
-            totalDistance: log.distance,
-          })
         }
+        // ponytail: users without seed entry are training_log entries for unknown users — ignore
       })
 
       // Build kelas_id → kelas_name lookup
@@ -215,11 +218,7 @@ export default function RankingPage() {
     )
   }
 
-  // Dynamic kelas — fetch from DB; always include "No-Race" fallback
-  const visibleKelas = [
-    ...kelasGroups.map((k) => k.name),
-    ...(kelasGroups.some((k) => k.name === "No-Race") ? [] : ["No-Race"]),
-  ]
+  const visibleKelas = kelasGroups.map((k) => k.name)
 
   const RankingList = ({ title, data }: { title: string; data: RankingUser[] }) => (
     <Card className="bg-strava-strava-dark rounded-md shadow-sm border border-none py-1">

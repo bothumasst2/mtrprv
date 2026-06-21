@@ -542,7 +542,9 @@ export default function AthletesPage() {
                     <p className="mt-1 text-[11px] font-bold text-gray-400">
                       Kelas:{" "}
                       <span className="text-strava">
-                        {kelasList.find((k) => k.id === selectedAthlete.kelas_id)?.name || selectedAthlete.kelas_id}
+                        {kelasList.find(
+                          (k) => k.id === selectedAthlete.kelas_id,
+                        )?.name || selectedAthlete.kelas_id}
                       </span>
                     </p>
                   )}
@@ -849,19 +851,19 @@ export default function AthletesPage() {
                     >
                       Kelas
                     </Label>
-                  <select
-                    id="kelas"
-                    value={newMemberKelas}
-                    onChange={(e) => setNewMemberKelas(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-strava/20"
-                  >
-                    <option value="">Pilih kelas...</option>
-                    {kelasList.map((kelas) => (
-                      <option key={kelas.id} value={kelas.id}>
-                        {kelas.name}
-                      </option>
-                    ))}
-                  </select>
+                    <select
+                      id="kelas"
+                      value={newMemberKelas}
+                      onChange={(e) => setNewMemberKelas(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-strava/20"
+                    >
+                      <option value="">Pilih kelas...</option>
+                      {kelasList.map((kelas) => (
+                        <option key={kelas.id} value={kelas.id}>
+                          {kelas.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <DialogFooter>
@@ -900,7 +902,8 @@ export default function AthletesPage() {
                             {" "}
                             with kelas{" "}
                             <span className="font-bold text-strava">
-                              {kelasList.find((k) => k.id === newMemberKelas)?.name || newMemberKelas}
+                              {kelasList.find((k) => k.id === newMemberKelas)
+                                ?.name || newMemberKelas}
                             </span>
                           </>
                         )}
@@ -1057,7 +1060,8 @@ export default function AthletesPage() {
                         </h3>
                         {athlete.kelas_id && (
                           <span className="inline-block px-1.5 py-0 rounded text-[7px] font-black uppercase bg-strava/20 text-strava">
-                            {kelasList.find((k) => k.id === athlete.kelas_id)?.name || athlete.kelas_id}
+                            {kelasList.find((k) => k.id === athlete.kelas_id)
+                              ?.name || athlete.kelas_id}
                           </span>
                         )}
                       </div>

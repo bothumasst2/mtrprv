@@ -65,6 +65,7 @@ export default function CoachTrainingMenuPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterKelas, setFilterKelas] = useState<string | null>(null);
   const [kelasList, setKelasList] = useState<KelasItem[]>([]);
@@ -156,6 +157,7 @@ export default function CoachTrainingMenuPage() {
         training_details: "",
         target_date: getLocalDateString(),
       });
+      setDialogOpen(false);
     }
 
     setLoading(false);
@@ -353,7 +355,7 @@ export default function CoachTrainingMenuPage() {
                 </div>
               )}
 
-              <AlertDialog>
+              <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button
                     type="button"

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Users, Activity, Calendar, TrendingUp } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 
@@ -249,7 +250,7 @@ export default function CoachDashboardPage() {
                       <div>
                         <p className="font-small text-gray-900 text-xs md:text-sm">{activity.training_type}</p>
                         <p className="text-[10px] md:text-sm text-gray-500">
-                          {activity.user.username} - {new Date(activity.date).toLocaleDateString()}
+                          {activity.user.username} - {formatDateID(activity.date)}
                         </p>
                       </div>
                     </div>

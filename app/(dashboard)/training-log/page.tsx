@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CheckCircle, XCircle, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { WeeklyActivityChart } from "@/components/WeeklyActivityChart"
 
@@ -145,7 +146,7 @@ export default function TrainingLogPage() {
                     <div>
                       <p className="font-roboto-bold text-xs">{log.training_type}</p>
                       <p className="text-xs text-gray-400">
-                        {log.distance}km • {new Date(log.date).toLocaleDateString()}
+                        {log.distance}km • {formatDateID(log.date)}
                       </p>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CheckCircle, XCircle, Activity, Trash2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils"
 
 function getSafeSrc(src: string | null | undefined) {
   return src && src.trim().length > 0 ? src : undefined
@@ -136,7 +137,7 @@ export default function CoachTrainingHistoryPage() {
                       <div>
                         <p className="px-2 text-sm md:text-base font-medium text-gray-900">{item.training_type}</p>
                         <p className="px-2 text-xs md:text-sm md:text-base text-gray-500">
-                          {item.user.username} - {item.distance}km - {new Date(item.date).toLocaleDateString()}
+                          {item.user.username} - {item.distance}km - {formatDateID(item.date)}
                         </p>
                       </div>
                     </div>

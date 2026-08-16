@@ -9,6 +9,7 @@ import {
     Tooltip,
 } from "recharts"
 import { endOfWeek, format, eachWeekOfInterval, subWeeks, startOfWeek } from "date-fns"
+import { id } from "date-fns/locale"
 import { ChartContainer } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
@@ -44,9 +45,9 @@ export function WeeklyActivityChart({ logs }: WeeklyActivityChartProps) {
             const totalDistance = weeklyLogs.reduce((sum, log) => sum + log.distance, 0)
 
             return {
-                week: format(weekStart, "MMM"),
-                weekLabel: format(weekStart, "d MMM"),
-                weekRange: `${format(weekStart, "d")} - ${format(weekEnd, "d MMMM")}`,
+                week: format(weekStart, "MMM", { locale: id }),
+                weekLabel: format(weekStart, "d MMM", { locale: id }),
+                weekRange: `${format(weekStart, "d", { locale: id })} - ${format(weekEnd, "d MMMM", { locale: id })}`,
                 distance: Number(totalDistance.toFixed(1)),
                 activities: weeklyLogs.length,
             }

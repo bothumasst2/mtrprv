@@ -10,7 +10,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import XLSX from "xlsx-js-style";
 import {
@@ -581,21 +582,13 @@ export default function ActiveAssignmentsPage() {
                       <div className="flex justify-between items-center text-[9px] md:text-sm">
                         <span className="text-gray-500">Target</span>
                         <span className="font-bold text-gray-900">
-                          {new Date(assignment.target_date).toLocaleDateString(
-                            undefined,
-                            { day: "2-digit", month: "short" },
-                          )}
+                          {formatDateID(assignment.target_date)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-[8px] md:text-xs">
                         <span className="text-gray-500">Assigned</span>
                         <span className="text-gray-400 italic">
-                          {new Date(
-                            assignment.assigned_date,
-                          ).toLocaleDateString(undefined, {
-                            day: "2-digit",
-                            month: "short",
-                          })}
+                          {formatDateID(assignment.assigned_date)}
                         </span>
                       </div>
                     </div>

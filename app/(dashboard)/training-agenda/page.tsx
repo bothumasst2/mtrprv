@@ -34,6 +34,7 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 
 interface TrainingAssignment {
@@ -300,13 +301,13 @@ export default function TrainingAgendaPage() {
                       <div>
                         <p className="text-white text-[10px]">Target Date</p>
                         <p className="text-strava font-bold">
-                          {new Date(assignment.target_date).toLocaleDateString()}
+                          {formatDateID(assignment.target_date)}
                         </p>
                       </div>
                       <div>
                         <p className="text-white text-[10px]">Assigned Date</p>
                         <p className="text-strava font-bold">
-                          {new Date(assignment.assigned_date).toLocaleDateString()}
+                          {formatDateID(assignment.assigned_date)}
                         </p>
                       </div>
                     </div>
@@ -339,13 +340,13 @@ export default function TrainingAgendaPage() {
                     <div>
                       <p className="text-gray-500 text-xs">Target Date</p>
                       <p className="text-strava font-bold">
-                        {new Date(selectedAssignment.target_date).toLocaleDateString()}
+                        {formatDateID(selectedAssignment.target_date)}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500 text-xs">Assigned Date</p>
                       <p className="text-strava font-bold">
-                        {new Date(selectedAssignment.assigned_date).toLocaleDateString()}
+                        {formatDateID(selectedAssignment.assigned_date)}
                       </p>
                     </div>
                   </div>

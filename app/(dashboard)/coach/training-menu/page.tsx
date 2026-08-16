@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Send, AlertCircle, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { formatDateID } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import {
   AlertDialog,
@@ -389,7 +390,7 @@ export default function CoachTrainingMenuPage() {
                       </span>{" "}
                       selected athlete(s), for{" "}
                       <span className="text-strava font-bold">
-                        {new Date(formData.target_date).toLocaleDateString()}
+                        {formatDateID(formData.target_date)}
                       </span>
                       .
                     </AlertDialogDescription>

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { CheckCircle, XCircle, Edit, Camera, Plus, Trash2, Check, Pencil } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useProfile } from "@/contexts/profile-context"
 import { useUserRole } from "@/hooks/use-user-role"
@@ -554,7 +555,7 @@ export default function ProfilePage() {
                     <div>
                       <p className="font-bold">{training.training_type}</p>
                       <p className="text-sm text-white">
-                        {training.distance} km - {new Date(training.date).toLocaleDateString()}
+                        {training.distance} km - {formatDateID(training.date)}
                       </p>
                     </div>
                   </div>

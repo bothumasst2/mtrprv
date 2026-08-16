@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Trophy, Medal, Award, RotateCcw } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { formatDateID } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useUserRole } from "@/hooks/use-user-role"
 import { resetRanking } from "@/actions/coach"
@@ -272,11 +273,7 @@ export default function RankingPage() {
               <p className="mt-1 text-[10px] text-gray-500 font-medium">
                 Periode sejak{" "}
                 <span className="font-bold text-gray-400">
-                  {new Date(cutoffDate).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {formatDateID(cutoffDate)}
                 </span>
               </p>
             )}

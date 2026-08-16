@@ -36,6 +36,7 @@ import {
   Settings,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { formatDateID } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { createAthlete, deleteAthletes } from "@/actions/coach";
 
@@ -633,19 +634,8 @@ export default function AthletesPage() {
                           <span className="text-xs text-gray-500">Target</span>
                           <span className="text-xs font-bold text-gray-900">
                             {activity.target_date
-                              ? new Date(
-                                  activity.target_date,
-                                ).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                })
-                              : new Date(activity.date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                  },
-                                )}
+                              ? formatDateID(activity.target_date)
+                              : formatDateID(activity.date)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
@@ -654,12 +644,7 @@ export default function AthletesPage() {
                           </span>
                           <span className="text-xs text-gray-400 italic">
                             {activity.assigned_date
-                              ? new Date(
-                                  activity.assigned_date,
-                                ).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                })
+                              ? formatDateID(activity.assigned_date)
                               : "—"}
                           </span>
                         </div>
@@ -1082,7 +1067,7 @@ export default function AthletesPage() {
                       <p className="text-gray-500">Last Activity</p>
                       <p className="font-medium text-gray-900">
                         {athlete.last_activity
-                          ? new Date(athlete.last_activity).toLocaleDateString()
+                          ? formatDateID(athlete.last_activity)
                           : "None"}
                       </p>
                     </div>

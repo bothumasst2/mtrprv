@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
+import { ensureIuranRecord, shouldBlockForIuran } from "@/lib/iuran"
 import { useRouter } from "next/navigation"
 
 interface AuthContextType {
@@ -15,14 +16,69 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function withTimeout<T>(promise: Promise<T>, milliseconds: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timeout")), milliseconds)),
+  ])
+}
+
+async function checkBlockReasons(userId: string): Promise<"blocked" | "iuran_blocked" | null> {
+  const blockCheck = withTimeout(
+    Promise.resolve(supabase.from("user_blocks").select("user_id").eq("user_id", userId).maybeSingle()),
+    5000,
+  )
+  const iuranCheck = (async () => {
+    await ensureIuranRecord(userId)
+    return shouldBlockForIuran(userId)
+  })()
+  const [blockResult, iuranResult] = await Promise.allSettled([blockCheck, iuranCheck])
+
+  if (blockResult.status === "fulfilled" && blockResult.value.data) return "blocked"
+  if (iuranResult.status === "fulfilled" && iuranResult.value) return "iuran_blocked"
+  return null
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const checkedUsersRef = useRef(new Set<string>())
+  const inflightChecksRef = useRef(new Map<string, Promise<boolean>>())
+
+  const handleBlockRedirect = useCallback(async (userId: string) => {
+    if (checkedUsersRef.current.has(userId)) return false
+    const existing = inflightChecksRef.current.get(userId)
+    if (existing) return existing
+
+    const check = (async () => {
+      try {
+        const reason = await checkBlockReasons(userId)
+        if (!reason) {
+          checkedUsersRef.current.add(userId)
+          return false
+        }
+        await supabase.auth.signOut()
+        setUser(null)
+        window.location.href = `/login?${reason}=true`
+        checkedUsersRef.current.add(userId)
+        return true
+      } catch (error) {
+        console.warn("Block check failed; retrying on next auth event:", error)
+        return false
+      } finally {
+        inflightChecksRef.current.delete(userId)
+      }
+    })()
+
+    inflightChecksRef.current.set(userId, check)
+    return check
+  }, [])
 
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
+      let initialUserId: string | null = null
       try {
         console.log("Getting initial session...")
         const {
@@ -37,12 +93,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUser(session?.user ?? null)
+        initialUserId = session?.user?.id ?? null
       } catch (error) {
         console.error("Failed to get initial session:", error)
         setUser(null)
       } finally {
         setLoading(false)
       }
+      if (initialUserId) await handleBlockRedirect(initialUserId)
     }
 
     getInitialSession()
@@ -55,6 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
 
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        await handleBlockRedirect(session.user.id)
+      }
+
       // Only redirect on sign out, not sign in (handled in signIn function)
       if (event === "SIGNED_OUT") {
         console.log("User signed out, redirecting to login")
@@ -63,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [router])
+  }, [router, handleBlockRedirect])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -83,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Get user role and redirect accordingly
       if (data.user) {
+        if (await handleBlockRedirect(data.user.id)) return
         const { data: userData } = await supabase.from("users").select("role").eq("id", data.user.id).single()
 
         const userRole = userData?.role || "user"

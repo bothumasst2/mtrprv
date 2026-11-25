@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useProfile } from "@/contexts/profile-context"
 import { useUserRole } from "@/hooks/use-user-role"
 import { ImageCropper } from "@/components/image-cropper"
+import { confirmIuranPayment } from "@/actions/coach"
 
 function getSafeSrc(src: string | null | undefined) {
   return src && src.trim().length > 0 ? src : undefined
@@ -48,6 +49,14 @@ interface KelasItem {
   id: string
   name: string
   sort_order: number
+}
+
+interface IuranAthlete {
+  id: string
+  username: string
+  email: string
+  status: "pending" | "paid" | null
+  isBlocked: boolean
 }
 
 export default function ProfilePage() {
@@ -82,6 +91,10 @@ export default function ProfilePage() {
   // Delete kelas state
   const [showDeleteKelasConfirm, setShowDeleteKelasConfirm] = useState<string | null>(null)
   const [deletingKelasId, setDeletingKelasId] = useState<string | null>(null)
+  const [iuranAthletes, setIuranAthletes] = useState<IuranAthlete[]>([])
+  const [loadingIuran, setLoadingIuran] = useState(false)
+  const [confirmingIuran, setConfirmingIuran] = useState<string | null>(null)
+  const [iuranError, setIuranError] = useState("")
 
   useEffect(() => {
     if (user) {
@@ -89,6 +102,7 @@ export default function ProfilePage() {
       fetchTrainingHistory()
       if (isCoachOrAdmin) {
         fetchKelas()
+        fetchIuranAthletes()
       }
     }
   }, [user, isCoachOrAdmin])
@@ -143,6 +157,44 @@ export default function ProfilePage() {
       .select("*")
       .order("sort_order", { ascending: true })
     setKelasList(data || [])
+  }
+
+  const fetchIuranAthletes = async () => {
+    setLoadingIuran(true)
+    const now = new Date()
+    const [usersResult, paymentsResult, blocksResult] = await Promise.all([
+      supabase.from("users").select("id, username, email").eq("role", "user").order("username"),
+      supabase.from("iuran_payments").select("user_id, status").eq("month", now.getMonth() + 1).eq("year", now.getFullYear()),
+      supabase.from("user_blocks").select("user_id"),
+    ])
+    const paymentByUser = new Map((paymentsResult.data || []).map((payment) => [payment.user_id, payment.status]))
+    const blockedUsers = new Set((blocksResult.data || []).map((block) => block.user_id))
+    setIuranAthletes((usersResult.data || []).map((athlete) => ({
+      ...athlete,
+      status: paymentByUser.get(athlete.id) || null,
+      isBlocked: blockedUsers.has(athlete.id),
+    })))
+    setLoadingIuran(false)
+  }
+
+  const handleConfirmIuran = async (athleteId: string) => {
+    const { data: session } = await supabase.auth.getSession()
+    if (!session.session?.access_token) {
+      setIuranError("Sesi login tidak tersedia.")
+      return
+    }
+    setConfirmingIuran(athleteId)
+    setIuranError("")
+    const formData = new FormData()
+    formData.set("user_id", athleteId)
+    formData.set("access_token", session.session.access_token)
+    const result = await confirmIuranPayment(formData)
+    if (result.error) {
+      setIuranError(result.error)
+    } else {
+      await fetchIuranAthletes()
+    }
+    setConfirmingIuran(null)
   }
 
   const updateProfile = async () => {
@@ -532,6 +584,49 @@ export default function ProfilePage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </Card>
+        )}
+
+        {isCoachOrAdmin && (
+          <Card className="bg-[#1f1f1f] rounded-lg shadow-sm border border-none">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-white">Manajemen Iuran</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {iuranError && <p role="alert" className="mb-3 text-sm text-red-400">{iuranError}</p>}
+              {loadingIuran ? (
+                <p className="py-4 text-sm text-gray-400">Memuat status iuran...</p>
+              ) : iuranAthletes.length === 0 ? (
+                <p className="py-4 text-sm text-gray-400">Belum ada athlete.</p>
+              ) : (
+                <div className="space-y-2">
+                  {iuranAthletes.map((athlete) => (
+                    <div key={athlete.id} className="flex flex-col gap-3 rounded-lg bg-[#2a2a2a] px-4 py-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="font-bold text-white">{athlete.username}</p>
+                        <p className="text-xs text-gray-400">{athlete.email}</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className={athlete.status === "paid" ? "text-green-400" : "text-amber-400"}>
+                          {athlete.status === "paid" ? "Lunas" : "Belum bayar"}
+                        </span>
+                        <span className={athlete.isBlocked ? "text-red-400" : "text-green-400"}>
+                          {athlete.isBlocked ? "Diblokir" : "Aktif"}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => handleConfirmIuran(athlete.id)}
+                          disabled={athlete.status === "paid" || confirmingIuran === athlete.id}
+                          className="h-8 bg-green-600 px-3 text-xs text-white hover:bg-green-700"
+                        >
+                          {confirmingIuran === athlete.id ? "Menyimpan..." : athlete.status === "paid" ? "Lunas" : "Konfirmasi"}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
           </Card>
         )}
 

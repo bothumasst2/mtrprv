@@ -25,10 +25,15 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [iuranBlocked, setIuranBlocked] = useState(false);
   const { signIn, user } = useAuth();
   const router = useRouter();
 
   // Redirect if already logged in - handled by root page or auth context
+  useEffect(() => {
+    setIuranBlocked(new URLSearchParams(window.location.search).get("iuran_blocked") === "true");
+  }, []);
+
   useEffect(() => {
     if (user && !loading) {
       // The redirection will be handled by either:
@@ -84,6 +89,12 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {iuranBlocked && (
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <p className="font-bold">Akun Anda diblokir karena iuran belum dibayar.</p>
+                <p className="mt-1">Hubungi coach untuk konfirmasi pembayaran.</p>
+              </div>
+            )}
             <div className="space-y-2 text-white">
               <Label htmlFor="email">Email :</Label>
               <Input

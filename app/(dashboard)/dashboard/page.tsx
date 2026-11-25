@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
+import { ensureIuranRecord, getIuranStatus, isPastIuranDeadline } from "@/lib/iuran";
 import Link from "next/link";
 
 interface TrainingStats {
@@ -33,12 +34,14 @@ export default function DashboardPage() {
     weeklyTraining: 0,
   });
   const [recentTasks, setRecentTasks] = useState<TrainingTask[]>([]);
+  const [iuranStatus, setIuranStatus] = useState<"pending" | "paid" | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
       fetchStats();
       fetchRecentTasks();
+      fetchIuranStatus();
     }
 
     // Listen for training completion events
@@ -50,6 +53,15 @@ export default function DashboardPage() {
     return () =>
       window.removeEventListener("trainingCompleted", handleTrainingCompleted);
   }, [user]);
+
+  const fetchIuranStatus = async () => {
+    if (!user) return;
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).maybeSingle();
+    if (profile?.role !== "user") return;
+    await ensureIuranRecord(user.id);
+    const { status } = await getIuranStatus(user.id);
+    setIuranStatus(status);
+  };
 
   const fetchStats = async () => {
     if (!user) return;
@@ -111,6 +123,14 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-strava-dark">
       <div className="px-4 py-6 space-y-2">
         <div className="w-full mx-auto">
+          {!isPastIuranDeadline(new Date().getDate()) && iuranStatus !== "paid" && (
+            <Card role="status" className="mb-2 border-amber-400 bg-amber-50 text-amber-900">
+              <CardContent className="p-4">
+                <p className="font-bold">Iuran bulan ini belum dikonfirmasi.</p>
+                <p className="text-sm">Silakan bayar sebelum tanggal 5 dan hubungi coach untuk konfirmasi.</p>
+              </CardContent>
+            </Card>
+          )}
           <TrainingCalendar />
         </div>
 

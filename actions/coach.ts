@@ -100,6 +100,50 @@ export async function createAthlete(formData: FormData) {
   }
 }
 
+export async function confirmIuranPayment(formData: FormData) {
+  const userId = String(formData.get("user_id") || "").trim()
+  const accessToken = String(formData.get("access_token") || "").trim()
+  if (!userId || !accessToken) return { error: "User ID and session are required" }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { error: "Server configuration error: Missing Supabase keys" }
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  const { data: authData, error: authError } = await supabase.auth.getUser(accessToken)
+  if (authError || !authData.user) return { error: "Authentication required" }
+
+  const { data: actor, error: actorError } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", authData.user.id)
+    .maybeSingle()
+  if (actorError || !actor || !["coach", "admin"].includes(actor.role)) {
+    return { error: "Only coaches and admins can confirm payments" }
+  }
+
+  const now = new Date()
+  const { error: upsertError } = await supabase.from("iuran_payments").upsert(
+    {
+      user_id: userId,
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+      status: "paid",
+      paid_at: now.toISOString(),
+    },
+    { onConflict: "user_id,month,year" },
+  )
+  if (upsertError) return { error: upsertError.message }
+
+  const { error: unblockError } = await supabase.from("user_blocks").delete().eq("user_id", userId)
+  if (unblockError) return { error: unblockError.message }
+
+  revalidatePath("/profile")
+  return { success: true }
+}
+
 export async function deleteAthletes(athleteIds: string[]) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
